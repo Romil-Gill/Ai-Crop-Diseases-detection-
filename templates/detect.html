@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header" style="margin-bottom: 30px;">
+    <h1>Plant Disease Detection</h1>
+    <p>Upload a clear photo of the affected crop leaf for instant diagnosis.</p>
+</div>
+
+<div class="content-card">
+    <div id="drop-zone" class="drop-zone">
+        <input type="file" id="file-input" accept="image/*" hidden>
+        <div id="drop-zone-prompt">
+            <i class="fas fa-cloud-upload-alt fa-3x" style="color: #43a047; margin-bottom: 10px;"></i>
+            <p>Drag & Drop or Click to Upload</p>
+        </div>
+        <div id="preview-container" class="hidden">
+            <img id="image-preview" src="" alt="Preview">
+        </div>
+    </div>
+
+    <button id="analyze-btn" class="primary-btn" disabled>
+        <i class="fas fa-microscope"></i> Start Analysis
+    </button>
+
+    <div id="loader" class="hidden">
+        <div class="spinner"></div>
+        <p>AI is analyzing leaf patterns...</p>
+    </div>
+
+    <div id="result-card" class="hidden" style="margin-top: 20px; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h3 style="color: #2e7d32;"><i class="fas fa-check-circle"></i> Result Found</h3>
+        <p><strong>Diagnosis:</strong> <span id="res-label">--</span></p>
+        <p><strong>Confidence:</strong> <span id="res-conf">--</span></p>
+        <div class="status-bar"></div>
+    </div>
+</div>
+{% endblock %}

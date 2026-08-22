@@ -1,0 +1,278 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #2e7d32;
+    padding: 1rem 5%;
+    color: white;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    text-decoration: underline;
+}
+
+.content { padding: 40px 10%; text-align: center; }
+.hidden { display: none; }
+
+.history-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.history-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.history-table th {
+    background-color: #2e7d32;
+    color: white;
+    text-align: left;
+    padding: 12px;
+}
+
+.history-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.badge-crop {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+}
+
+/* Confidence Bar inside table */
+.conf-bar-bg {
+    background: #e0e0e0;
+    height: 8px;
+    width: 100px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-right: 8px;
+    overflow: hidden;
+}
+
+.conf-bar-fill {
+    background: #4caf50;
+    height: 100%;
+}
+
+.secondary-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.empty-state {
+    padding: 40px;
+    color: #888;
+}
+
+.empty-state i { font-size: 3em; margin-bottom: 10px; color: #ccc; }
+
+.drop-zone {
+    max-width: 100%;
+    height: 300px;
+    padding: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    cursor: pointer;
+    border: 3px dashed #43a047;
+    border-radius: 15px;
+    background: #f9fdf9;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.drop-zone--over {
+    border-style: solid;
+    background: #e8f5e9;
+    transform: scale(1.02);
+}
+
+#image-preview {
+    max-width: 100%;
+    max-height: 250px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.hidden { display: none; }
+
+.status-bar {
+    height: 10px;
+    background: #4caf50; /* Adjust color based on confidence if desired */
+    border-radius: 5px;
+    margin-top: 15px;
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #1b5e20;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Contact & History Container */
+.content-card {
+    max-width: 600px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+/* Form Styling */
+/* Center the form on the page */
+.contact-card-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+
+.content-card {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    border-top: 5px solid #2e7d32; /* Nice green accent at the top */
+}
+
+/* Stack labels on top of inputs */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.form-group label {
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+/* Modern Input Styling */
+.form-group input, 
+.form-group textarea {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus {
+    border-color: #4caf50;
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+    outline: none;
+}
+
+/* Button Styling */
+.primary-btn {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.primary-btn:hover {
+    background: #43a047;
+}
+/* History Table Styling */
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: white;
+}
+
+.history-table th {
+    background-color: #2e7d32;
+    color: white;
+    padding: 15px;
+    text-align: left;
+}
+
+.history-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-healthy { background: #c8e6c9; color: #256029; }
+.status-disease { background: #ffcdd2; color: #c62828; }
+
+/* --- Global Background Setup --- */
+
+/* First, set the default background image for all pages. */
+/* --- Global Background Setup --- */
+body {
+    /* The ../ tells the browser: "Leave the CSS folder and look in the static folder" */
+    background-image: url("../hero-farm.jpg") ; 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+/* Ensure the background stays removed for the Detect page */
+.detect-page {
+    background-image: none ;
+    background-color: #f4f7f4 ;
+}

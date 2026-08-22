@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <h1>Smart Farming Starts Here</h1>
+    <p style="font-size: large; font-weight: 1000;">Use our advanced AI to identify crop diseases instantly. Just upload a photo of a leaf and get an expert diagnosis.</p>
+    <a href="/detect" class="cta-btn" style="font-weight: bold; font-size: large;">Start Detection</a>
+</section>
+
+<section class="features">
+    <div class="feature-card">
+        <i class="fas fa-bolt"></i>
+        <h3>Instant Results</h3>
+        <p>Get diagnosis in seconds using TensorFlow Lite.</p>
+    </div>
+    <div class="feature-card">
+        <i class="fas fa-microscope"></i>
+        <h3>25+ Classes</h3>
+        <p style="font-size: large; font-weight: 600;">Detects diseases in Rice, Sugarcane, Pumpkin, and Tomato.</p>
+    </div>
+</section>
+{% endblock %}
