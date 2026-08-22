@@ -1,12 +1,5 @@
-import site
-import os
-import sys
-site.addsitedir(r'C:\Users\DELL\AppData\Roaming\Python\Python311\site-packages')
-try:
-    from flask_cors import CORS
-    has_cors = True
-except ImportError:
-    has_cors = False
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
@@ -15,15 +8,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 
 app = Flask(__name__)
-if has_cors:
-    CORS(app)
-else:
-    @app.after_request
-    def add_cors_headers(response):
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
-        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS'
-        return response
+CORS(app)
 
 # Configuration
 UPLOAD_FOLDER = "uploads"

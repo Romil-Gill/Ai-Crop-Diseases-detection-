@@ -1,7 +1,5 @@
-import site
 import os
-import sys
-site.addsitedir(r'C:\Users\DELL\AppData\Roaming\Python\Python311\site-packages')
+import io
 import unittest
 from PIL import Image
 import json
