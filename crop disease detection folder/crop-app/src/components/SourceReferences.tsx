@@ -38,12 +38,19 @@ export const SourceReferences: React.FC<SourceReferencesProps> = ({ sources }) =
       {isOpen && (
         <div className="mt-3 space-y-2 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-sans">
           {sources.map((src, idx) => (
-            <div key={idx} className="flex items-start justify-between gap-3 p-2.5 rounded-xl bg-white border border-slate-200/80">
-              <div>
-                <span className="font-bold text-slate-900 block font-outfit">
-                  {src.organization}
-                </span>
-                <span className="text-slate-600 text-[11px] block mt-0.5">
+            <div key={idx} className="flex items-start justify-between gap-3 p-3 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900 font-outfit">
+                    {src.organization}
+                  </span>
+                  {src.source_type && (
+                    <span className="text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                      {src.source_type}
+                    </span>
+                  )}
+                </div>
+                <span className="text-slate-600 text-[11px] block">
                   {src.title}
                 </span>
               </div>

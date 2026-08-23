@@ -237,9 +237,11 @@ class TestFasalRakshakAPI(unittest.TestCase):
         print("[TEST 13 PASSED] GET /api/advisory correctly rejected missing and unsupported class_name.")
 
     def test_14_advisory_all_27_classes_coverage(self):
-        """Test that ALL 27 model classes have complete advisory entries"""
+        """Test that ALL 27 model classes have complete advisory entries with valid source metadata"""
         from advisory_data import ADVISORY_DATABASE
         from app import class_names
+
+        valid_source_types = {'ICAR', 'Government', 'University Extension', 'FAO'}
 
         self.assertEqual(len(class_names), 27)
         for c_name in class_names:
@@ -248,8 +250,18 @@ class TestFasalRakshakAPI(unittest.TestCase):
             self.assertIsNotNone(entry.get('overview'), f"Missing overview for '{c_name}'")
             self.assertTrue(len(entry.get('immediate_actions', [])) > 0, f"Missing immediate_actions for '{c_name}'")
             self.assertTrue(len(entry.get('prevention', [])) > 0, f"Missing prevention for '{c_name}'")
-            self.assertTrue(len(entry.get('sources', [])) >= 1, f"Missing sources for '{c_name}'")
-        print(f"[TEST 14 PASSED] 100% Advisory Data Coverage verified across all {len(class_names)} model classes.")
+            
+            sources = entry.get('sources', [])
+            self.assertTrue(len(sources) >= 1, f"Missing sources for '{c_name}'")
+            for src in sources:
+                self.assertTrue(bool(src.get('organization')), f"Empty organization in source for '{c_name}'")
+                self.assertTrue(bool(src.get('title')), f"Empty title in source for '{c_name}'")
+                url = src.get('url', '')
+                self.assertTrue(url.startswith('http://') or url.startswith('https://'), f"Invalid URL '{url}' in source for '{c_name}'")
+                stype = src.get('source_type')
+                self.assertIn(stype, valid_source_types, f"Invalid or missing source_type '{stype}' for '{c_name}'")
+
+        print(f"[TEST 14 PASSED] 100% Advisory Data Coverage & Source Metadata verified across all {len(class_names)} model classes.")
 
     def test_15_advisory_safety_no_chemical_fields(self):
         """Safety Test: Ensure advisory database contains NO forbidden chemical fields or recommendations"""

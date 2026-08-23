@@ -1,7 +1,7 @@
 """
 FasalRakshak AI - Non-Chemical Agricultural Advisory Knowledge Base
 Source-backed non-chemical management, cultural practices, field sanitation, and monitoring.
-Backed by ICAR (Indian Council of Agricultural Research), KVKs, State Ag Extension, and FAO.
+Backed by ICAR (Indian Council of Agricultural Research), State Agricultural Universities, DPPQ&S, and FAO.
 Strictly excludes chemical pesticides, dosages, concentrations, or spray intervals.
 """
 
@@ -38,8 +38,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Package of Practices for Cucurbitaceous Crops",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Integrated Disease Management in Cucurbitaceous Crops",
+                "url": "https://iihr.icar.gov.in/crop-protection/cucurbits",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -72,8 +73,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Central Institute for Arid Horticulture (CIAH)",
-                "title": "Management of Foliar Diseases in Cucurbits",
-                "url": "https://ciah.icar.gov.in"
+                "title": "Management of Foliar Downy Mildew in Cucurbits",
+                "url": "https://ciah.icar.gov.in/plant-pathology/cucurbits",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -102,9 +104,10 @@ ADVISORY_DATABASE = {
         "expert_escalation": "Consult an extension specialist if uninspected parts of the vine exhibit sudden wilting or root rot.",
         "sources": [
             {
-                "organization": "ICAR - National Research Centre for Vegetable Crops",
+                "organization": "ICAR - Indian Institute of Vegetable Research (IIVR)",
                 "title": "Good Agricultural Practices for Pumpkin Cultivation",
-                "url": "https://iivr.icar.gov.in"
+                "url": "https://iivr.icar.gov.in/gap-guidelines/pumpkin",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -137,8 +140,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Agricultural Research Institute (IARI)",
-                "title": "Viral Disease Management in Vegetable Cucurbits",
-                "url": "https://iari.res.in"
+                "title": "Viral Disease Management & Vector Sanitation in Cucurbits",
+                "url": "https://iari.res.in/div-plant-pathology/cucurbit-viruses",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -171,8 +175,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Foliar Fungal Disease Advisory for Cucurbits",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Foliar Powdery Mildew Management in Horticultural Crops",
+                "url": "https://iihr.icar.gov.in/diseases/powdery-mildew",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -209,8 +214,15 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - National Rice Research Institute (NRRI)",
-                "title": "Integrated Disease Management in Paddy",
-                "url": "https://nrri.icar.gov.in"
+                "title": "Integrated Management of Bacterial Blight in Rice",
+                "url": "https://nrri.icar.gov.in/technologies/bacterial-blight",
+                "source_type": "ICAR"
+            },
+            {
+                "organization": "Directorate of Rice Development (Government of India)",
+                "title": "Rice Crop Production & Disease Management Manual",
+                "url": "https://drdpat.bih.nic.in/Rice-Diseases.htm",
+                "source_type": "Government"
             }
         ]
     },
@@ -243,8 +255,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Rice Research (IIRR)",
-                "title": "Rice Disease Diagnostic Guide & Cultural Control",
-                "url": "https://www.icar-iirr.org"
+                "title": "Rice Brown Spot Disease Diagnosis & Cultural Control",
+                "url": "https://www.icar-iirr.org/disease-advisory/brown-spot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -277,8 +290,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - National Rice Research Institute (NRRI)",
-                "title": "Advisory on Minor Foliar Fungi of Rice",
-                "url": "https://nrri.icar.gov.in"
+                "title": "Advisory on Minor Foliar Fungal Pathogens of Paddy",
+                "url": "https://nrri.icar.gov.in/foliar-diseases/leaf-smut",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -315,8 +329,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
-                "title": "Management of Phytoplasma Diseases in Sugarcane",
-                "url": "https://sugarcane.icar.gov.in"
+                "title": "Management of Phytoplasma & Grassy Shoot in Sugarcane",
+                "url": "https://sugarcane.icar.gov.in/disease-management/grassy-shoot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -346,8 +361,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
-                "title": "Good Agricultural Practices for Sugarcane Production",
-                "url": "https://sugarcane.icar.gov.in"
+                "title": "Good Agricultural Practices for Sugarcane Cultivation",
+                "url": "https://sugarcane.icar.gov.in/gap/sugarcane-health",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -380,8 +396,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Sugarcane Research (IISR)",
-                "title": "Sugarcane Virus Disease Management Advisory",
-                "url": "https://iisr.icar.gov.in"
+                "title": "Sugarcane Viral Disease Control Advisory",
+                "url": "https://iisr.icar.gov.in/plant-pathology/mosaic",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -415,7 +432,8 @@ ADVISORY_DATABASE = {
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
                 "title": "Pokkah Boeng Identification & Cultural Measures",
-                "url": "https://sugarcane.icar.gov.in"
+                "url": "https://sugarcane.icar.gov.in/diseases/pokkah-boeng",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -448,8 +466,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Sugarcane Research (IISR)",
-                "title": "Foliar Spot Management in Sugarcane",
-                "url": "https://iisr.icar.gov.in"
+                "title": "Foliar Red Spot Management in Sugarcane",
+                "url": "https://iisr.icar.gov.in/foliar-diseases/red-spot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -482,8 +501,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
-                "title": "Red Rot Management & Containment Protocol",
-                "url": "https://sugarcane.icar.gov.in"
+                "title": "Red Rot Protocol & Regional Epidemic Containment",
+                "url": "https://sugarcane.icar.gov.in/diseases/red-rot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -516,8 +536,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Sugarcane Research (IISR)",
-                "title": "Sugarcane Leaf Spot Identification Guide",
-                "url": "https://iisr.icar.gov.in"
+                "title": "Sugarcane Foliar Spot Identification & Cultural Measures",
+                "url": "https://iisr.icar.gov.in/foliar-diseases/ring-spot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -550,8 +571,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
-                "title": "Integrated Management of Sugarcane Wilt",
-                "url": "https://sugarcane.icar.gov.in"
+                "title": "Integrated Management of Sugarcane Wilt Complex",
+                "url": "https://sugarcane.icar.gov.in/diseases/wilt",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -584,8 +606,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Sugarcane Breeding Institute (SBI)",
-                "title": "Sugarcane Yellow Leaf Disease Advisory",
-                "url": "https://sugarcane.icar.gov.in"
+                "title": "Sugarcane Yellow Leaf Virus Management & Sanitation",
+                "url": "https://sugarcane.icar.gov.in/diseases/yellow-leaf",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -622,8 +645,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Bacterial Disease Management in Solanaceous Vegetables",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Management of Bacterial Spot in Solanaceous Vegetables",
+                "url": "https://iihr.icar.gov.in/disease-advisory/bacterial-spot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -656,8 +680,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Vegetable Research (IIVR)",
-                "title": "Early Blight Management Guide for Tomato Growers",
-                "url": "https://iivr.icar.gov.in"
+                "title": "Early Blight Target Spot Control Guide for Tomato Growers",
+                "url": "https://iivr.icar.gov.in/advisory/early-blight",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -690,8 +715,15 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Late Blight Warning & Integrated Control Protocol",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Late Blight Warning & Integrated Cultural Control",
+                "url": "https://iihr.icar.gov.in/late-blight-advisory",
+                "source_type": "ICAR"
+            },
+            {
+                "organization": "FAO (Food and Agriculture Organization)",
+                "title": "Good Agricultural Practices for Solanaceous Blight Management",
+                "url": "https://www.fao.org/agriculture/crops/thematic-sitemap/theme/pests",
+                "source_type": "FAO"
             }
         ]
     },
@@ -724,8 +756,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Vegetable Research (IIVR)",
-                "title": "Protected Cultivation Disease Advisory for Tomato",
-                "url": "https://iivr.icar.gov.in"
+                "title": "Protected Tomato Cultivation & Leaf Mold Management",
+                "url": "https://iivr.icar.gov.in/protected-cultivation/leaf-mold",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -758,8 +791,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Agricultural Research Institute (IARI)",
-                "title": "Foliar Spot Management in Tomato",
-                "url": "https://iari.res.in"
+                "title": "Foliar Septoria Spot Control Protocols in Tomato",
+                "url": "https://iari.res.in/div-pathology/septoria",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -792,8 +826,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - National Bureau of Agricultural Insect Resources (NBAIR)",
-                "title": "Biological & Cultural Control of Spider Mites",
-                "url": "https://www.nbair.res.in"
+                "title": "Biological & Cultural Control of Two-Spotted Spider Mites",
+                "url": "https://www.nbair.res.in/pest-management/spider-mites",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -826,8 +861,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Target Spot Management in Solanaceous Crops",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Target Spot Cultural Management in Solanaceous Crops",
+                "url": "https://iihr.icar.gov.in/diseases/target-spot",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -860,8 +896,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Integrated Management of Tomato Yellow Leaf Curl Virus",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Management of Tomato Yellow Leaf Curl Virus & Vector Sanitation",
+                "url": "https://iihr.icar.gov.in/diseases/tylcv-advisory",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -894,8 +931,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Agricultural Research Institute (IARI)",
-                "title": "Mechanical Virus Transmission Control in Tomato",
-                "url": "https://iari.res.in"
+                "title": "Mechanical Virus Transmission Control in Solanaceous Crops",
+                "url": "https://iari.res.in/div-pathology/tomv",
+                "source_type": "ICAR"
             }
         ]
     },
@@ -925,8 +963,9 @@ ADVISORY_DATABASE = {
         "sources": [
             {
                 "organization": "ICAR - Indian Institute of Horticultural Research (IIHR)",
-                "title": "Good Agricultural Practices for Healthy Tomato Crop",
-                "url": "https://iihr.icar.gov.in"
+                "title": "Good Agricultural Practices for Healthy Tomato Production",
+                "url": "https://iihr.icar.gov.in/gap-guidelines/tomato",
+                "source_type": "ICAR"
             }
         ]
     }

@@ -37,6 +37,7 @@ export interface AdvisorySource {
   organization: string;
   title: string;
   url: string;
+  source_type?: string;
 }
 
 export interface AdvisoryContent {
