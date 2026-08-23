@@ -8,6 +8,7 @@ import { AnalysisLoader } from './components/AnalysisLoader';
 import { DiagnosisCard } from './components/DiagnosisCard';
 import { GradCamVisualizer } from './components/GradCamVisualizer';
 import { SymptomVerification } from './components/SymptomVerification';
+import { WeatherContextPanel } from './components/WeatherContextPanel';
 import { AdvisoryPanel } from './components/AdvisoryPanel';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
@@ -228,7 +229,15 @@ export const App: React.FC = () => {
                 onScanAnotherLeaf={handleResetUpload}
               />
 
-              {/* 4. Farmer Action Advisory Plan */}
+              {/* 4. Weather Risk Context */}
+              <WeatherContextPanel
+                className={analysisResult.prediction.class_name}
+                crop={analysisResult.prediction.crop}
+                condition={analysisResult.prediction.condition}
+                isHealthy={analysisResult.is_healthy}
+              />
+
+              {/* 5. Farmer Action Advisory Plan */}
               {analysisResult.advisory ? (
                 <AdvisoryPanel
                   advisory={analysisResult.advisory}

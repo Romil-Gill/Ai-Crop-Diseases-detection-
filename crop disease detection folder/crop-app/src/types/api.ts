@@ -101,6 +101,70 @@ export interface SymptomVerifyResponse {
   disclaimer: string;
 }
 
+export interface LocationSearchResult {
+  name: string;
+  admin1: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  timezone: string;
+}
+
+export interface LocationSearchResponse {
+  status: string;
+  query?: string;
+  results: LocationSearchResult[];
+}
+
+export interface CurrentWeather {
+  temperature_c: number;
+  humidity_percent: number;
+  precipitation_mm: number;
+  wind_kmh: number;
+  weather_code: number;
+}
+
+export interface ForecastSummary {
+  next_24h: {
+    temp_max_c: number;
+    temp_min_c: number;
+    total_precip_mm: number;
+  };
+}
+
+export interface DiseaseWeatherContext {
+  available: boolean;
+  favorability: 'LOW' | 'MODERATE' | 'HIGH' | 'NEUTRAL' | 'UNAVAILABLE';
+  favorability_label: string;
+  matched_factors: string[];
+  unmatched_factors: string[];
+  explanation: string;
+  disclaimer: string;
+  sources: string[];
+}
+
+export interface WeatherSourceInfo {
+  provider: string;
+  url?: string;
+  notes?: string;
+}
+
+export interface WeatherContextResponse {
+  status: string;
+  weather_available: boolean;
+  location?: {
+    name: string;
+    latitude: number;
+    longitude: number;
+    timezone: string;
+  };
+  current?: CurrentWeather;
+  forecast_summary?: ForecastSummary;
+  disease_context: DiseaseWeatherContext;
+  weather_source: WeatherSourceInfo;
+  message?: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;

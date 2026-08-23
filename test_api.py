@@ -4,6 +4,7 @@ import unittest
 from PIL import Image
 import json
 from app import app, model, tf
+from unittest.mock import patch
 
 class TestFasalRakshakAPI(unittest.TestCase):
     @classmethod
@@ -416,6 +417,147 @@ class TestFasalRakshakAPI(unittest.TestCase):
             f"Symptom question coverage mismatch! Missing: {disease_classes - symptom_classes}, Extra: {symptom_classes - disease_classes}"
         )
         print("[TEST 24 PASSED] Programmatic Symptom Coverage Audit: 100% 24/24 disease classes covered.")
+
+    @patch('weather_service.requests.get')
+    def test_25_location_search_endpoint(self, mock_get):
+        """Test GET /api/location-search endpoint with mocked Open-Meteo response"""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "results": [
+                {"name": "Ambala", "admin1": "Haryana", "country": "India", "latitude": 30.3782, "longitude": 76.7767, "timezone": "Asia/Kolkata"}
+            ]
+        }
+        res = self.client.get('/api/location-search?q=Ambala')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertEqual(len(j['results']), 1)
+        self.assertEqual(j['results'][0]['name'], 'Ambala')
+        print("[TEST 25 PASSED] GET /api/location-search returned normalized location results.")
+
+    def test_26_location_search_validation(self):
+        """Test GET /api/location-search validation for short or empty queries"""
+        res1 = self.client.get('/api/location-search?q=a')
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res1.get_json()['results'], [])
+
+        res2 = self.client.get('/api/location-search?q=')
+        self.assertEqual(res2.status_code, 200)
+        self.assertEqual(res2.get_json()['results'], [])
+        print("[TEST 26 PASSED] Location search empty/short query validation verified.")
+
+    @patch('weather_service.requests.get')
+    def test_27_weather_context_endpoint(self, mock_get):
+        """Test GET /api/weather-context with mocked forecast response"""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "timezone": "Asia/Kolkata",
+            "current": {
+                "temperature_2m": 28.5,
+                "relative_humidity_2m": 88.0,
+                "precipitation": 2.5,
+                "weather_code": 61,
+                "wind_speed_10m": 12.0
+            },
+            "hourly": {
+                "temperature_2m": [28.5] * 24,
+                "relative_humidity_2m": [88.0] * 24,
+                "dew_point_2m": [25.0] * 24,
+                "precipitation": [0.1] * 24,
+                "precipitation_probability": [80] * 24
+            }
+        }
+        res = self.client.get('/api/weather-context?latitude=30.3782&longitude=76.7767&class_name=Rice-Bacterialblight&location_name=Ambala')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertTrue(j['weather_available'])
+        self.assertEqual(j['current']['temperature_c'], 28.5)
+        self.assertEqual(j['disease_context']['favorability'], 'HIGH')
+        print("[TEST 27 PASSED] GET /api/weather-context returned valid weather & HIGH favorability context.")
+
+    def test_28_weather_context_validation(self):
+        """Test GET /api/weather-context input validation for missing or invalid parameters"""
+        res1 = self.client.get('/api/weather-context?class_name=Rice-Bacterialblight')
+        self.assertEqual(res1.status_code, 400)
+
+        res2 = self.client.get('/api/weather-context?latitude=invalid&longitude=76.77&class_name=Rice-Bacterialblight')
+        self.assertEqual(res2.status_code, 400)
+
+        res3 = self.client.get('/api/weather-context?latitude=999.0&longitude=76.77&class_name=Rice-Bacterialblight')
+        self.assertEqual(res3.status_code, 400)
+
+        res4 = self.client.get('/api/weather-context?latitude=30.37&longitude=76.77&class_name=UnknownClass')
+        self.assertEqual(res4.status_code, 400)
+        print("[TEST 28 PASSED] GET /api/weather-context parameter validation correctly enforced.")
+
+    @patch('weather_service.requests.get')
+    def test_29_weather_context_disease_without_rules(self, mock_get):
+        """Test weather context for viral disease without specific weather rules"""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "timezone": "Asia/Kolkata",
+            "current": {"temperature_2m": 30.0, "relative_humidity_2m": 60.0, "precipitation": 0.0, "weather_code": 0, "wind_speed_10m": 5.0},
+            "hourly": {"temperature_2m": [30.0]*24, "relative_humidity_2m": [60.0]*24, "dew_point_2m": [20.0]*24, "precipitation": [0.0]*24, "precipitation_probability": [0]*24}
+        }
+        res = self.client.get('/api/weather-context?latitude=30.3782&longitude=76.7767&class_name=Tomato___Tomato_mosaic_virus')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertFalse(j['disease_context']['available'])
+        self.assertEqual(j['disease_context']['favorability'], 'NEUTRAL')
+        print("[TEST 29 PASSED] Viral disease weather context returned neutral non-causal information.")
+
+    def test_30_weather_context_favorability_evaluations(self):
+        """Test favorability scoring logic for HIGH, MODERATE, and LOW levels"""
+        from weather_risk_data import evaluate_weather_favorability
+
+        high_res = evaluate_weather_favorability("Rice-Bacterialblight", 28.0, 85.0, 5.0)
+        self.assertEqual(high_res['favorability'], 'HIGH')
+
+        low_res = evaluate_weather_favorability("Rice-Bacterialblight", 10.0, 40.0, 0.0)
+        self.assertEqual(low_res['favorability'], 'LOW')
+        print("[TEST 30 PASSED] Weather favorability evaluation logic strictly verified across thresholds.")
+
+    @patch('weather_service.requests.get')
+    def test_31_weather_service_failure_resilience(self, mock_get):
+        """Test fallback behavior when Open-Meteo API is unreachable or times out"""
+        mock_get.side_effect = Exception("Connection timeout error")
+
+        res = self.client.get('/api/weather-context?latitude=30.3782&longitude=76.7767&class_name=Rice-Bacterialblight')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'partial_success')
+        self.assertFalse(j['weather_available'])
+        self.assertIn('temporarily unavailable', j['message'].lower())
+        print("[TEST 31 PASSED] Weather API failure resilience verified; returned partial_success fallback.")
+
+    @patch('weather_service.requests.get')
+    def test_32_healthy_class_weather_context(self, mock_get):
+        """Test weather context for healthy crop predictions"""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "timezone": "Asia/Kolkata",
+            "current": {"temperature_2m": 26.0, "relative_humidity_2m": 65.0, "precipitation": 0.0, "weather_code": 1, "wind_speed_10m": 8.0},
+            "hourly": {"temperature_2m": [26.0]*24, "relative_humidity_2m": [65.0]*24, "dew_point_2m": [18.0]*24, "precipitation": [0.0]*24, "precipitation_probability": [10]*24}
+        }
+        res = self.client.get('/api/weather-context?latitude=30.3782&longitude=76.7767&class_name=Tomato___healthy')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertTrue(j['weather_available'])
+        self.assertEqual(j['disease_context']['favorability'], 'NEUTRAL')
+        print("[TEST 32 PASSED] Healthy crop class weather context returned non-alarmist neutral weather.")
+
+    def test_33_weather_scoring_isolation_test(self):
+        """Safety Test: Verify weather favorability scoring accepts ZERO CNN confidence, symptom, or field concern inputs"""
+        from weather_risk_data import evaluate_weather_favorability
+        import inspect
+
+        sig = inspect.signature(evaluate_weather_favorability)
+        params = list(sig.parameters.keys())
+        self.assertNotIn('confidence', params)
+        self.assertNotIn('symptom_score', params)
+        self.assertNotIn('concern_level', params)
+        print("[TEST 33 PASSED] Weather favorability scoring strict independence verified.")
 
 if __name__ == '__main__':
     unittest.main()

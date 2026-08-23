@@ -172,6 +172,7 @@ def predict_api():
 
 from advisory_data import ADVISORY_DATABASE
 from symptom_data import SYMPTOM_QUESTIONS, FIELD_SPREAD_OPTIONS, evaluate_symptom_verification
+from weather_service import search_location, fetch_weather_context
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
@@ -181,6 +182,56 @@ def api_health():
         "supported_crops": SUPPORTED_CROPS,
         "total_classes": len(class_names)
     }), 200
+
+@app.route('/api/location-search', methods=['GET'])
+def api_location_search():
+    q = request.args.get('q', '').strip()
+    if not q or len(q) < 2:
+        return jsonify({
+            "status": "success",
+            "results": []
+        }), 200
+
+    results = search_location(q)
+    return jsonify({
+        "status": "success",
+        "query": q,
+        "results": results
+    }), 200
+
+@app.route('/api/weather-context', methods=['GET'])
+def api_weather_context():
+    lat_raw = request.args.get('latitude')
+    lon_raw = request.args.get('longitude')
+    c_name = request.args.get('class_name')
+    loc_name = request.args.get('location_name')
+
+    if not lat_raw or not lon_raw or not c_name:
+        return jsonify({
+            "error": "Missing required query parameters: 'latitude', 'longitude', and 'class_name'."
+        }), 400
+
+    c_name = c_name.strip()
+    if c_name not in class_names:
+        return jsonify({
+            "error": f"Unsupported or invalid class_name '{c_name}'."
+        }), 400
+
+    try:
+        lat = float(lat_raw)
+        lon = float(lon_raw)
+    except ValueError:
+        return jsonify({
+            "error": f"Invalid numeric format for latitude ('{lat_raw}') or longitude ('{lon_raw}')."
+        }), 400
+
+    if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lon <= 180.0):
+        return jsonify({
+            "error": "Latitude must be between -90 and 90, Longitude between -180 and 180."
+        }), 400
+
+    res = fetch_weather_context(lat, lon, c_name, location_name=loc_name)
+    return jsonify(res), 200
 
 @app.route('/api/symptom-questions', methods=['GET'])
 def api_symptom_questions():

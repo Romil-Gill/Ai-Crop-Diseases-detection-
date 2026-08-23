@@ -1,15 +1,17 @@
 import React from 'react';
 import type { SymptomVerifyResponse } from '../types/api';
-import { ShieldCheck, AlertCircle, AlertTriangle, Cpu, CheckCircle2, Activity } from 'lucide-react';
+import { ShieldCheck, AlertCircle, AlertTriangle, Cpu, CheckCircle2, Activity, CloudSun } from 'lucide-react';
 
 interface EvidenceSummaryProps {
   confidence: number;
   verificationResult: SymptomVerifyResponse;
+  weatherFavorability?: string; // 'LOW' | 'MODERATE' | 'HIGH' | 'NEUTRAL' | 'UNAVAILABLE'
 }
 
 export const EvidenceSummary: React.FC<EvidenceSummaryProps> = ({
   confidence,
   verificationResult,
+  weatherFavorability = 'MODERATE',
 }) => {
   const { symptom_verification, field_assessment, disclaimer } = verificationResult;
   const { agreement, agreement_label } = symptom_verification;
@@ -28,6 +30,14 @@ export const EvidenceSummary: React.FC<EvidenceSummaryProps> = ({
     HIGH: 'bg-rose-600 animate-pulse',
   }[concern_level] || 'bg-slate-500';
 
+  const weatherBadgeStyle = {
+    HIGH: 'bg-rose-100 text-rose-950 border-rose-300 font-extrabold',
+    MODERATE: 'bg-amber-100 text-amber-950 border-amber-300',
+    LOW: 'bg-emerald-100 text-emerald-950 border-emerald-300',
+    NEUTRAL: 'bg-blue-100 text-blue-950 border-blue-300',
+    UNAVAILABLE: 'bg-slate-700 text-slate-300 border-slate-600',
+  }[weatherFavorability] || 'bg-slate-100 text-slate-800 border-slate-200';
+
   return (
     <div className="p-6 rounded-3xl bg-slate-900 text-white space-y-5 shadow-lg border border-slate-800">
       <div className="flex items-center justify-between">
@@ -38,12 +48,12 @@ export const EvidenceSummary: React.FC<EvidenceSummaryProps> = ({
           </h4>
         </div>
         <span className="text-[11px] text-slate-400 font-mono">
-          Multi-Layer Decision Support
+          Independent Multi-Layer Decision Support
         </span>
       </div>
 
-      {/* 3-Pill Evidence Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* 4-Pill Evidence Breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Pill 1: CNN Model Confidence */}
         <div className="p-3.5 rounded-2xl bg-slate-800/90 border border-slate-700/80 space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 font-outfit uppercase tracking-wider">
@@ -76,6 +86,19 @@ export const EvidenceSummary: React.FC<EvidenceSummaryProps> = ({
             <span className={`w-2 h-2 rounded-full ${concernDotColor}`} />
             <span className={`text-xs px-2 py-0.5 rounded-full border font-bold font-mono ${concernBadgeStyle}`}>
               {concern_level} CONCERN
+            </span>
+          </div>
+        </div>
+
+        {/* Pill 4: Weather Favorability */}
+        <div className="p-3.5 rounded-2xl bg-slate-800/90 border border-slate-700/80 space-y-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-300 font-outfit uppercase tracking-wider">
+            <CloudSun className="w-3.5 h-3.5 text-indigo-400" />
+            <span>4. Weather Favorability</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`text-xs px-2 py-0.5 rounded-full border font-bold font-mono ${weatherBadgeStyle}`}>
+              {weatherFavorability} RISK
             </span>
           </div>
         </div>

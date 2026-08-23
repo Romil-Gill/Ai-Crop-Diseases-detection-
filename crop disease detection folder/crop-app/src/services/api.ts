@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, SupportedCrop } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -147,6 +147,59 @@ export const verifySymptoms = async (
       throw new Error(error.response?.data?.error || 'Failed to submit symptom verification.');
     }
     throw new Error('Network error during symptom verification submission.');
+  }
+};
+
+export const searchLocations = async (query: string): Promise<LocationSearchResponse> => {
+  try {
+    const response = await apiClient.get<LocationSearchResponse>('/api/location-search', {
+      params: { q: query },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return { status: 'error', results: [] };
+    }
+    return { status: 'error', results: [] };
+  }
+};
+
+export const getWeatherContext = async (
+  latitude: number,
+  longitude: number,
+  className: string,
+  locationName?: string
+): Promise<WeatherContextResponse> => {
+  try {
+    const response = await apiClient.get<WeatherContextResponse>('/api/weather-context', {
+      params: {
+        latitude,
+        longitude,
+        class_name: className,
+        location_name: locationName,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return {
+        status: 'partial_success',
+        weather_available: false,
+        message: 'Weather service temporarily unreachable.',
+        disease_context: {
+          available: false,
+          favorability: 'UNAVAILABLE',
+          favorability_label: 'Weather Service Unavailable',
+          matched_factors: [],
+          unmatched_factors: [],
+          explanation: 'Weather service is offline. Crop diagnosis and advisory remain fully functional.',
+          disclaimer: 'Weather favorability is supplementary and does not affect diagnosis reliability.',
+          sources: [],
+        },
+        weather_source: { provider: 'Open-Meteo' },
+      };
+    }
+    throw new Error('Network error while retrieving weather context.');
   }
 };
 
