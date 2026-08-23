@@ -208,5 +208,64 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertIsNone(res_json['explanation'])
         print(f"[TEST 11 PASSED] /api/explain crop mismatch returns uncertain status without confirmed explanation.")
 
+    def test_12_advisory_disease_and_healthy(self):
+        """Test GET /api/advisory for disease and healthy classes"""
+        res1 = self.client.get('/api/advisory?class_name=Rice-Brownspot')
+        self.assertEqual(res1.status_code, 200)
+        j1 = res1.get_json()
+        self.assertEqual(j1['status'], 'success')
+        self.assertEqual(j1['condition'], 'Brown Spot')
+        self.assertFalse(j1['is_healthy'])
+        self.assertIn('overview', j1['advisory'])
+        self.assertTrue(len(j1['sources']) >= 1)
+
+        res2 = self.client.get('/api/advisory?class_name=Tomato___healthy')
+        self.assertEqual(res2.status_code, 200)
+        j2 = res2.get_json()
+        self.assertEqual(j2['status'], 'success')
+        self.assertTrue(j2['is_healthy'])
+        print("[TEST 12 PASSED] GET /api/advisory returned valid structured data for disease & healthy classes.")
+
+    def test_13_advisory_unsupported_class(self):
+        """Test GET /api/advisory with missing or unsupported class_name"""
+        res1 = self.client.get('/api/advisory')
+        self.assertEqual(res1.status_code, 400)
+
+        res2 = self.client.get('/api/advisory?class_name=Wheat-Healthy')
+        self.assertEqual(res2.status_code, 400)
+        self.assertIn('Unsupported or invalid', res2.get_json()['error'])
+        print("[TEST 13 PASSED] GET /api/advisory correctly rejected missing and unsupported class_name.")
+
+    def test_14_advisory_all_27_classes_coverage(self):
+        """Test that ALL 27 model classes have complete advisory entries"""
+        from advisory_data import ADVISORY_DATABASE
+        from app import class_names
+
+        self.assertEqual(len(class_names), 27)
+        for c_name in class_names:
+            self.assertIn(c_name, ADVISORY_DATABASE, f"Missing advisory data for class '{c_name}'")
+            entry = ADVISORY_DATABASE[c_name]
+            self.assertIsNotNone(entry.get('overview'), f"Missing overview for '{c_name}'")
+            self.assertTrue(len(entry.get('immediate_actions', [])) > 0, f"Missing immediate_actions for '{c_name}'")
+            self.assertTrue(len(entry.get('prevention', [])) > 0, f"Missing prevention for '{c_name}'")
+            self.assertTrue(len(entry.get('sources', [])) >= 1, f"Missing sources for '{c_name}'")
+        print(f"[TEST 14 PASSED] 100% Advisory Data Coverage verified across all {len(class_names)} model classes.")
+
+    def test_15_advisory_safety_no_chemical_fields(self):
+        """Safety Test: Ensure advisory database contains NO forbidden chemical fields or recommendations"""
+        from advisory_data import ADVISORY_DATABASE, verified_chemical_guidance
+
+        forbidden_keys = {'dosage', 'concentration', 'spray_interval', 'chemical_treatment', 'pesticide_dosage'}
+        self.assertIsNone(verified_chemical_guidance, "verified_chemical_guidance must remain disabled (None)")
+
+        for c_name, entry in ADVISORY_DATABASE.items():
+            for key in entry.keys():
+                self.assertNotIn(key.lower(), forbidden_keys, f"Forbidden chemical key '{key}' found in '{c_name}'")
+            
+            combined_text = str(entry).lower()
+            for key in forbidden_keys:
+                self.assertNotIn(key, combined_text, f"Forbidden term '{key}' found in advisory text for '{c_name}'")
+        print("[TEST 15 PASSED] Safety Gate verified: Zero chemical/dosage/spray_interval fields present.")
+
 if __name__ == '__main__':
     unittest.main()

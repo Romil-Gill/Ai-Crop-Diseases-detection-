@@ -7,6 +7,7 @@ import { ScanPreview } from './components/ScanPreview';
 import { AnalysisLoader } from './components/AnalysisLoader';
 import { DiagnosisCard } from './components/DiagnosisCard';
 import { GradCamVisualizer } from './components/GradCamVisualizer';
+import { AdvisoryPanel } from './components/AdvisoryPanel';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
 import { ErrorState } from './components/ErrorState';
@@ -205,9 +206,10 @@ export const App: React.FC = () => {
           {/* State 5: Successful / Reliable Diagnosis */}
           {analysisResult && analysisResult.diagnosis_reliable && (
             <div className="space-y-6">
+              {/* 1. AI Crop Assessment + Model Confidence */}
               <DiagnosisCard result={analysisResult} />
               
-              {/* Grad-CAM Explainable AI Overlay (Only for reliable diagnoses) */}
+              {/* 2. Grad-CAM Explainable AI Overlay */}
               {analysisResult.explanation && imagePreviewUrl && (
                 <GradCamVisualizer
                   explanation={analysisResult.explanation}
@@ -215,7 +217,25 @@ export const App: React.FC = () => {
                 />
               )}
 
-              <TopPredictions predictions={analysisResult.top_predictions} />
+              {/* 3. Farmer Action Advisory Plan */}
+              {analysisResult.advisory ? (
+                <AdvisoryPanel
+                  advisory={analysisResult.advisory}
+                  crop={analysisResult.prediction.crop}
+                  condition={analysisResult.prediction.condition}
+                  isHealthy={analysisResult.is_healthy}
+                />
+              ) : (
+                <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-xs text-slate-600">
+                  Guidance temporarily unavailable for this condition.
+                </div>
+              )}
+
+              {/* 4. Other Possible Crop Matches */}
+              <TopPredictions
+                predictions={analysisResult.top_predictions}
+                selectedCrop={selectedCrop}
+              />
 
               {/* Action Button to Scan Another Leaf */}
               <div className="text-center pt-2">

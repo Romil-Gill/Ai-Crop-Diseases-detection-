@@ -65,23 +65,35 @@ export const UncertainState: React.FC<UncertainStateProps> = ({
       </div>
 
       {/* Primary User Guidance Actions */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6">
+      <div className="p-4 bg-amber-100/50 border border-amber-300 rounded-2xl mb-5 text-xs text-amber-950 font-medium">
+        <strong>Important:</strong> Get a reliable diagnosis before acting on crop management recommendations. Retake the leaf image in clear lighting or select the matching crop.
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <button
           type="button"
           onClick={onResetUpload}
-          className="w-full sm:w-1/2 px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 active:scale-95 flex items-center justify-center gap-2"
+          className="px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-md shadow-amber-600/20 active:scale-95 flex items-center justify-center gap-2"
         >
           <RefreshCw className="w-4 h-4" />
-          Upload Another Leaf Image
+          Retake / Upload Image
         </button>
 
         <button
           type="button"
           onClick={onChangeCrop}
-          className="w-full sm:w-1/2 px-5 py-3 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 text-amber-900 text-xs font-bold transition-all flex items-center justify-center gap-2"
+          className="px-4 py-3 rounded-xl border border-amber-300 bg-white hover:bg-amber-50 text-amber-900 text-xs font-bold transition-all flex items-center justify-center gap-2"
         >
           <Sliders className="w-4 h-4 text-amber-700" />
-          Change Target Crop
+          Change Crop
+        </button>
+
+        <button
+          type="button"
+          onClick={() => alert("Consult your local Krishi Vigyan Kendra (KVK) or extension officer for assistance.")}
+          className="px-4 py-3 rounded-xl border border-amber-400 bg-amber-100 hover:bg-amber-200 text-amber-950 text-xs font-bold transition-all flex items-center justify-center gap-2"
+        >
+          Consult Expert
         </button>
       </div>
 

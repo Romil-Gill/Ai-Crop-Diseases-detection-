@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, SupportedCrop } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -96,6 +96,23 @@ export const explainDisease = async (
       throw new Error(serverErr);
     }
     throw new Error('Network timeout or connection error during Grad-CAM explanation generation.');
+  }
+};
+
+export const getAdvisory = async (className: string): Promise<AdvisoryResponse> => {
+  try {
+    const response = await apiClient.get<AdvisoryResponse>('/api/advisory', {
+      params: { class_name: className },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        throw new Error('Flask ML backend server is currently offline.');
+      }
+      throw new Error(error.response.data?.error || 'Failed to fetch agricultural advisory.');
+    }
+    throw new Error('Network error while retrieving advisory information.');
   }
 };
 

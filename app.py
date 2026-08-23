@@ -170,6 +170,8 @@ def predict_api():
 
 # --- NEW REST API ENDPOINTS (FasalRakshak AI Phase 1A/1B) ---
 
+from advisory_data import ADVISORY_DATABASE
+
 @app.route('/api/health', methods=['GET'])
 def api_health():
     return jsonify({
@@ -177,6 +179,36 @@ def api_health():
         "model_loaded": model is not None,
         "supported_crops": SUPPORTED_CROPS,
         "total_classes": len(class_names)
+    }), 200
+
+@app.route('/api/advisory', methods=['GET'])
+def api_advisory():
+    c_name = request.args.get('class_name')
+    if not c_name:
+        return jsonify({"error": "Missing required query parameter 'class_name'"}), 400
+    
+    c_name = c_name.strip()
+    if c_name not in ADVISORY_DATABASE:
+        return jsonify({
+            "error": f"Unsupported or invalid class_name '{c_name}'. Must be one of the 27 model classes."
+        }), 400
+
+    item = ADVISORY_DATABASE[c_name]
+    return jsonify({
+        "status": "success",
+        "class_name": item["class_name"],
+        "crop": item["crop"],
+        "condition": item["condition"],
+        "is_healthy": item["is_healthy"],
+        "advisory": {
+            "overview": item["overview"],
+            "common_symptoms": item["common_symptoms"],
+            "immediate_actions": item["immediate_actions"],
+            "prevention": item["prevention"],
+            "monitoring": item["monitoring"],
+            "expert_escalation": item["expert_escalation"]
+        },
+        "sources": item["sources"]
     }), 200
 
 @app.route('/api/classes', methods=['GET'])
@@ -391,6 +423,8 @@ def api_explain():
         ]
 
         explanation = None
+        advisory_info = None
+
         if diagnosis_reliable:
             explanation = generate_gradcam(
                 model=model,
@@ -398,6 +432,17 @@ def api_explain():
                 target_class_idx=top1["index"],
                 original_pil_image=pil_img
             )
+            adv_raw = ADVISORY_DATABASE.get(top1["class_name"])
+            if adv_raw:
+                advisory_info = {
+                    "overview": adv_raw["overview"],
+                    "common_symptoms": adv_raw["common_symptoms"],
+                    "immediate_actions": adv_raw["immediate_actions"],
+                    "prevention": adv_raw["prevention"],
+                    "monitoring": adv_raw["monitoring"],
+                    "expert_escalation": adv_raw["expert_escalation"],
+                    "sources": adv_raw["sources"]
+                }
 
         return jsonify({
             "status": status,
@@ -412,7 +457,8 @@ def api_explain():
             "diagnosis_reliable": diagnosis_reliable,
             "uncertainty_reason": uncertainty_reason,
             "is_healthy": top1["is_healthy"],
-            "explanation": explanation
+            "explanation": explanation,
+            "advisory": advisory_info
         }), 200
 
     except Exception as e:

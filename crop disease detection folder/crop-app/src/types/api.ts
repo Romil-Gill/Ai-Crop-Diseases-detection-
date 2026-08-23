@@ -33,6 +33,32 @@ export interface GradCamExplanation {
   target_layer: string;
 }
 
+export interface AdvisorySource {
+  organization: string;
+  title: string;
+  url: string;
+}
+
+export interface AdvisoryContent {
+  overview: string;
+  common_symptoms: string[];
+  immediate_actions: string[];
+  prevention: string[];
+  monitoring: string[];
+  expert_escalation: string;
+  sources: AdvisorySource[];
+}
+
+export interface AdvisoryResponse {
+  status: string;
+  class_name: string;
+  crop: string;
+  condition: string;
+  is_healthy: boolean;
+  advisory: AdvisoryContent;
+  sources: AdvisorySource[];
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;
@@ -42,6 +68,7 @@ export interface PredictResponse {
   uncertainty_reason?: string | null;
   is_healthy: boolean;
   explanation?: GradCamExplanation | null;
+  advisory?: AdvisoryContent | null;
 }
 
 export interface ApiError {
