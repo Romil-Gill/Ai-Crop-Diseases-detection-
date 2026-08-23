@@ -32,16 +32,26 @@ export const RecentSignals: React.FC<RecentSignalsProps> = ({ signals }) => {
               key={sig.id}
               className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full bg-slate-900 text-white font-extrabold text-[10px] uppercase font-mono">
                   {sig.crop}
                 </span>
                 <span className="font-bold text-slate-900">
                   {sig.condition}
                 </span>
+                {sig.field_concern && (
+                  <span className="px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 text-[10px] font-bold font-mono">
+                    Concern: {sig.field_concern}
+                  </span>
+                )}
+                {sig.weather_favorability && (
+                  <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] font-bold font-mono">
+                    Weather: {sig.weather_favorability}
+                  </span>
+                )}
               </div>
 
-              <div className="flex items-center gap-3 text-slate-500 font-medium">
+              <div className="flex items-center gap-3 text-slate-500 font-medium shrink-0">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5 text-slate-400" />
                   <span>{sig.area_name}</span>

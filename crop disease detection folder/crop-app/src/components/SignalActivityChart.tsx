@@ -23,7 +23,7 @@ export const SignalActivityChart: React.FC<SignalActivityChartProps> = ({ dailyT
         <div className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-blue-600" />
           <h4 className="text-base font-extrabold text-slate-900">
-            Reported Signal Activity Over Time
+            Reported Signal Activity
           </h4>
         </div>
         <span className="text-[11px] font-bold text-slate-500">

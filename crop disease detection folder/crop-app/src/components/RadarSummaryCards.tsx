@@ -37,7 +37,7 @@ export const RadarSummaryCards: React.FC<RadarSummaryCardsProps> = ({ summary })
           <span>Top Crop</span>
         </div>
         <div className="text-lg font-extrabold text-lime-300 truncate">
-          {summary.most_reported_crop}
+          {!summary.most_reported_crop || summary.most_reported_crop === 'None' ? '—' : summary.most_reported_crop}
         </div>
         <p className="text-[10px] text-slate-400 font-sans">Highest signals</p>
       </div>
@@ -48,7 +48,7 @@ export const RadarSummaryCards: React.FC<RadarSummaryCardsProps> = ({ summary })
           <span>Top Condition</span>
         </div>
         <div className="text-base font-extrabold text-amber-300 truncate">
-          {summary.most_reported_condition}
+          {!summary.most_reported_condition || summary.most_reported_condition === 'None' ? '—' : summary.most_reported_condition}
         </div>
         <p className="text-[10px] text-slate-400 font-sans">Most active signal</p>
       </div>

@@ -9,7 +9,7 @@ import { SignalActivityChart } from './SignalActivityChart';
 import { CropBreakdown } from './CropBreakdown';
 import { RecentSignals } from './RecentSignals';
 import { MethodologyPanel } from './MethodologyPanel';
-import { Shield, Sparkles, Building2 } from 'lucide-react';
+import { Sparkles, Building2 } from 'lucide-react';
 
 interface OperationsDashboardProps {
   radarData: CommunityRadarResponse;
@@ -37,16 +37,16 @@ export const OperationsDashboard: React.FC<OperationsDashboardProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-xl font-extrabold text-white">
-              Agri Operations View
+            <h3 className="text-xl font-extrabold text-white uppercase tracking-wider">
+              AGRI OPERATIONS VIEW
             </h3>
           </div>
           <span className="text-[11px] px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/40 font-mono font-bold text-emerald-300 w-fit">
-            Regional Crop Intelligence Prototype
+            Regional Telemetry Intelligence
           </span>
         </div>
         <p className="text-xs text-slate-300 font-sans max-w-2xl">
-          Designed for extension officers and regional agronomy teams to monitor emerging community-reported crop health activity while preserving farmer anonymity.
+          Prototype community intelligence for agricultural monitoring
         </p>
       </div>
 
@@ -77,7 +77,7 @@ export const OperationsDashboard: React.FC<OperationsDashboardProps> = ({
             </span>
           )}
         </div>
-        <RadarMap areas={radarData.areas} isDemoMode={mode === 'demo'} />
+        <RadarMap areas={radarData.areas} />
       </div>
 
       {/* Areas to Watch Table */}

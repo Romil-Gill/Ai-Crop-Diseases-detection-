@@ -133,17 +133,25 @@ export const CommunityPage: React.FC = () => {
                         Scan your crop leaf and opt in to contribute anonymized signal telemetry for your area.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setDataMode('demo')}
-                      className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 shadow-xs"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Switch to Demo Data Mode</span>
-                    </button>
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                      <a
+                        href="/detect"
+                        className="px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <span>Scan a Crop</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => setDataMode('demo')}
+                        className="px-4 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs inline-flex items-center gap-1.5 shadow-2xs"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>View Demo Data</span>
+                      </button>
+                    </div>
                   </div>
                 ) : (
-                  <RadarMap areas={radarData.areas} isDemoMode={dataMode === 'demo'} />
+                  <RadarMap areas={radarData.areas} />
                 )}
               </div>
 

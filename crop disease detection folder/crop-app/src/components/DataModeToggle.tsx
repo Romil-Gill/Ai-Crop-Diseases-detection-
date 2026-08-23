@@ -14,12 +14,17 @@ export const DataModeToggle: React.FC<DataModeToggleProps> = ({ mode, onChangeMo
           <Database className="w-4 h-4" />
         </div>
         <div>
-          <div className="text-xs font-bold text-slate-200">
-            Telemetry Data Source Mode
+          <div className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+            <span>Telemetry Data Source Mode</span>
+            {mode === 'demo' && (
+              <span className="px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[10px] font-black tracking-wider uppercase font-mono">
+                DEMO DATA
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-slate-400 font-sans">
             {mode === 'demo'
-              ? 'Displaying synthetic regional demo signals for SIH presentation.'
+              ? 'Illustrative community signal data for prototype demonstration.'
               : 'Displaying real local SQLite community signals.'}
           </p>
         </div>

@@ -2,14 +2,13 @@ import React from 'react';
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet';
 import type { RadarAreaItem } from '../types/api';
 import 'leaflet/dist/leaflet.css';
-import { Shield, Radio, MapPin } from 'lucide-react';
+import { Shield, MapPin } from 'lucide-react';
 
 interface RadarMapProps {
   areas: RadarAreaItem[];
-  isDemoMode?: boolean;
 }
 
-export const RadarMap: React.FC<RadarMapProps> = ({ areas, isDemoMode = false }) => {
+export const RadarMap: React.FC<RadarMapProps> = ({ areas }) => {
   // Default map center around Haryana & North India
   const centerLat = areas.length > 0 ? areas[0].map_lat : 30.1;
   const centerLon = areas.length > 0 ? areas[0].map_lon : 76.9;
@@ -96,11 +95,11 @@ export const RadarMap: React.FC<RadarMapProps> = ({ areas, isDemoMode = false })
         </MapContainer>
 
         {/* Map Legend Overlay */}
-        <div className="absolute bottom-3 left-3 z-20 p-2.5 rounded-2xl glass-panel border border-slate-200 shadow-md text-xs font-outfit space-y-1">
-          <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+        <div className="absolute bottom-3 left-3 z-20 p-3 rounded-2xl glass-panel border border-slate-200 shadow-md text-xs font-outfit space-y-1.5 max-w-[260px]">
+          <div className="text-[10px] font-extrabold text-slate-700 uppercase tracking-wider">
             Activity Level Legend
           </div>
-          <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-800">
+          <div className="flex items-center gap-3 text-[11px] font-bold text-slate-800">
             <div className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
               <span>Low</span>
@@ -114,6 +113,9 @@ export const RadarMap: React.FC<RadarMapProps> = ({ areas, isDemoMode = false })
               <span>Elevated</span>
             </div>
           </div>
+          <p className="text-[9.5px] text-slate-500 font-sans leading-tight border-t border-slate-200/60 pt-1">
+            * Activity reflects community report volume, not disease severity.
+          </p>
         </div>
       </div>
 

@@ -35,12 +35,13 @@ export const AreasToWatch: React.FC<AreasToWatchProps> = ({ areas }) => {
             Areas to Watch (Priority Aggregation)
           </h4>
         </div>
-        <span className="text-[11px] font-bold text-slate-500">
-          Ranked by Signal Volume
+        <span className="text-[11px] font-bold text-slate-500 font-sans">
+          Ranked by recent community-reported activity.
         </span>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Desktop Table View */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
@@ -84,6 +85,42 @@ export const AreasToWatch: React.FC<AreasToWatchProps> = ({ areas }) => {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Cards View */}
+      <div className="sm:hidden space-y-2.5">
+        {areas.map((area, idx) => {
+          const topCond = area.conditions[0] || { crop: 'Crop', condition: 'Condition', count: 0 };
+          const formattedTime = new Date(area.last_signal_at).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short',
+          });
+
+          return (
+            <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-extrabold text-slate-900">
+                  <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                  <span>{area.area_name}</span>
+                </div>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold font-mono border ${getActivityBadge(area.activity_level)}`}>
+                  {area.activity_level}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-slate-600 font-medium">
+                <div>
+                  <span className="font-bold text-slate-900">{topCond.crop}</span> • {topCond.condition}
+                </div>
+                <div className="font-mono font-bold text-slate-900">
+                  {area.signal_count} signal{area.signal_count > 1 ? 's' : ''}
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-400 text-right">
+                Last signal: {formattedTime}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
