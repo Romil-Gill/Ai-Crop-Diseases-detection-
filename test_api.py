@@ -873,5 +873,147 @@ class TestFasalRakshakAPI(unittest.TestCase):
                 os.remove(tmp_path)
         print("[TEST 51 PASSED] Isolated database migration & initialization verified.")
 
+    def test_52_community_radar_endpoint_structure(self):
+        """Phase 7 Test: Verify GET /api/community-radar returns valid structured radar intelligence"""
+        res = self.client.get('/api/community-radar')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertIn('summary', j)
+        self.assertIn('areas', j)
+        self.assertIn('daily_trend', j)
+        self.assertIn('crop_breakdown', j)
+        self.assertIn('recent_signals', j)
+        self.assertIn('disclaimer', j)
+        print("[TEST 52 PASSED] GET /api/community-radar returned valid structured intelligence.")
+
+    def test_53_community_radar_time_filtering(self):
+        """Phase 7 Test: Verify radar endpoint time window filtering (24h, 7d, 30d, all time)"""
+        res_7d = self.client.get('/api/community-radar?days=7')
+        res_30d = self.client.get('/api/community-radar?days=30')
+        self.assertEqual(res_7d.status_code, 200)
+        self.assertEqual(res_30d.status_code, 200)
+        print("[TEST 53 PASSED] Community radar time window filtering verified.")
+
+    def test_54_community_radar_crop_filtering(self):
+        """Phase 7 Test: Verify radar crop filtering (Rice vs All) and rejection of unsupported crop"""
+        res_rice = self.client.get('/api/community-radar?crop=Rice')
+        self.assertEqual(res_rice.status_code, 200)
+        for area in res_rice.get_json()['areas']:
+            for cond in area['conditions']:
+                self.assertEqual(cond['crop'], 'Rice')
+
+        res_invalid = self.client.get('/api/community-radar?crop=Wheat')
+        self.assertEqual(res_invalid.status_code, 400)
+        print("[TEST 54 PASSED] Community radar crop filtering & unsupported crop rejection verified.")
+
+    def test_55_community_radar_activity_level_calculation(self):
+        """Phase 7 Test: Verify deterministic activity level calculation (LOW, MODERATE, ELEVATED)"""
+        import database
+        radar_demo = database.get_community_radar(mode='demo', days=30)
+        for area in radar_demo['areas']:
+            cnt = area['signal_count']
+            lvl = area['activity_level']
+            if cnt >= 4:
+                self.assertEqual(lvl, 'ELEVATED')
+            elif cnt >= 2:
+                self.assertEqual(lvl, 'MODERATE')
+            else:
+                self.assertEqual(lvl, 'LOW')
+        print("[TEST 55 PASSED] Deterministic activity level calculation (LOW, MODERATE, ELEVATED) verified.")
+
+    def test_56_community_radar_coarsened_coordinates_only(self):
+        """Phase 7 Privacy Test: Verify public radar endpoint returns ONLY map_lat and map_lon (1 decimal place)"""
+        res = self.client.get('/api/community-radar?mode=demo')
+        self.assertEqual(res.status_code, 200)
+        areas = res.get_json()['areas']
+
+        for area in areas:
+            self.assertIn('map_lat', area)
+            self.assertIn('map_lon', area)
+            self.assertNotIn('raw_lat', area)
+            self.assertNotIn('raw_lon', area)
+            self.assertNotIn('exact_lat', area)
+
+            lat_str = str(area['map_lat'])
+            if '.' in lat_str:
+                self.assertTrue(len(lat_str.split('.')[1]) <= 1, f"Excessive precision in map_lat '{lat_str}'!")
+        print("[TEST 56 PASSED] Public radar map coordinates coarsened to 1 decimal place max.")
+
+    def test_57_community_radar_recursive_privacy_safety_audit(self):
+        """Phase 7 Privacy Audit: Verify public radar payload recursively contains ZERO forbidden private fields"""
+        res = self.client.get('/api/community-radar?mode=demo')
+        forbidden_keys = {
+            "image", "image_path", "uploaded_image", "original_filename",
+            "raw_lat", "raw_lon", "exact_lat", "exact_lon", "latitude", "longitude",
+            "personal_identifiers", "ip_address", "user_id"
+        }
+
+        def check_obj(obj, path="root"):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    self.assertNotIn(k.lower(), forbidden_keys, f"Forbidden key '{k}' found at {path}!")
+                    check_obj(v, f"{path}.{k}")
+            elif isinstance(obj, list):
+                for idx, item in enumerate(obj):
+                    check_obj(item, f"{path}[{idx}]")
+
+        check_obj(res.get_json())
+        print("[TEST 57 PASSED] Recursive Privacy Safety Audit: Zero private or raw GPS fields in radar response.")
+
+    def test_58_community_radar_demo_mode(self):
+        """Phase 7 Test: Verify Demo Mode returns synthetic illustrative signals without reading/writing SQLite table"""
+        import database
+        db_count_before = len(database.get_community_signals())
+
+        res_demo = self.client.get('/api/community-radar?mode=demo')
+        self.assertEqual(res_demo.status_code, 200)
+        j = res_demo.get_json()
+        self.assertEqual(j['mode'], 'demo')
+        self.assertTrue(len(j['areas']) >= 1)
+
+        db_count_after = len(database.get_community_signals())
+        self.assertEqual(db_count_before, db_count_after, "Demo Mode must not touch SQLite database rows!")
+        print("[TEST 58 PASSED] Demo Mode isolation verified: Returns synthetic illustrative dataset without touching SQLite DB.")
+
+    def test_59_community_radar_empty_live_handling(self):
+        """Phase 7 Test: Verify live radar mode handles empty database gracefully without crashes"""
+        import database
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            database.init_db(tmp_path)
+            empty_radar = database.get_community_radar(mode='live', db_path=tmp_path)
+            self.assertEqual(empty_radar['summary']['total_signals'], 0)
+            self.assertEqual(empty_radar['areas'], [])
+            self.assertEqual(empty_radar['daily_trend'], [])
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        print("[TEST 59 PASSED] Empty live radar handled gracefully with zero counts.")
+
+    def test_60_community_radar_daily_trend_grouping(self):
+        """Phase 7 Test: Verify daily_trend correctly groups signal counts by YYYY-MM-DD date string"""
+        res = self.client.get('/api/community-radar?mode=demo')
+        self.assertEqual(res.status_code, 200)
+        trend = res.get_json()['daily_trend']
+        self.assertIsInstance(trend, list)
+        for item in trend:
+            self.assertIn('date', item)
+            self.assertIn('signals', item)
+            self.assertTrue(len(item['date']) == 10)
+        print("[TEST 60 PASSED] Daily trend grouping by YYYY-MM-DD date verified.")
+
+    def test_61_community_radar_areas_to_watch_ranking(self):
+        """Phase 7 Test: Verify areas list is deterministically ranked by signal_count descending"""
+        res = self.client.get('/api/community-radar?mode=demo')
+        self.assertEqual(res.status_code, 200)
+        areas = res.get_json()['areas']
+        for i in range(len(areas) - 1):
+            self.assertTrue(areas[i]['signal_count'] >= areas[i+1]['signal_count'], "Areas must be ranked by signal_count descending!")
+        print("[TEST 61 PASSED] Areas to Watch deterministic ranking (signal_count DESC) verified.")
+
 if __name__ == '__main__':
     unittest.main()

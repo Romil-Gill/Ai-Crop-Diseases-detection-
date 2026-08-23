@@ -236,6 +236,56 @@ export interface CommunitySummaryResponse {
   disclaimer: string;
 }
 
+export interface RadarAreaCondition {
+  crop: string;
+  condition: string;
+  count: number;
+}
+
+export interface RadarAreaItem {
+  area_name: string;
+  map_lat: number;
+  map_lon: number;
+  signal_count: number;
+  activity_level: 'LOW' | 'MODERATE' | 'ELEVATED';
+  conditions: RadarAreaCondition[];
+  last_signal_at: string;
+}
+
+export interface DailyTrendItem {
+  date: string;
+  signals: number;
+}
+
+export interface CropBreakdownItem {
+  crop: string;
+  signals: number;
+}
+
+export interface CommunityRadarSummary {
+  total_signals: number;
+  active_areas: number;
+  most_reported_crop: string;
+  most_reported_condition: string;
+}
+
+export interface CommunityRadarResponse {
+  status: string;
+  mode: 'live' | 'demo';
+  filters: {
+    days: number;
+    crop: string;
+    condition?: string;
+  };
+  summary: CommunityRadarSummary;
+  areas: RadarAreaItem[];
+  daily_trend: DailyTrendItem[];
+  crop_breakdown: CropBreakdownItem[];
+  recent_signals: CommunitySignalRecord[];
+  disclaimer: string;
+  message?: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;

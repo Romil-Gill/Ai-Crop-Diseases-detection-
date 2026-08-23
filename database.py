@@ -301,6 +301,147 @@ def get_community_summary(db_path: Optional[str] = None) -> Dict[str, Any]:
     }
 
 
+def get_community_radar(mode: str = 'live', days: int = 7, crop: str = 'All', condition: Optional[str] = None, db_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Returns anonymized, area-aggregated Community Disease Radar intelligence.
+    Supports live SQLite signals and synthetic Demo Mode signals.
+    """
+    mode = mode.lower() if mode else 'live'
+
+    if mode == 'demo':
+        from demo_community_data import get_demo_signals
+        raw_signals = get_demo_signals()
+    else:
+        raw_signals = get_community_signals(limit=500, db_path=db_path)
+
+    now = datetime.utcnow()
+
+    # Filter signals by time window and crop
+    filtered = []
+    for sig in raw_signals:
+        created_str = sig["created_at"]
+        try:
+            created_dt = datetime.strptime(created_str, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            created_dt = now
+
+        if days > 0:
+            cutoff = now - timedelta(days=days)
+            if created_dt < cutoff:
+                continue
+
+        # Crop Filter
+        if crop and crop.lower() != 'all':
+            if sig["crop"].lower() != crop.lower():
+                continue
+
+        # Condition Filter
+        if condition and condition.strip():
+            if sig["class_name"].lower() != condition.strip().lower():
+                continue
+
+        filtered.append((sig, created_dt))
+
+    # 1. Area Clustering & Activity Level calculation
+    areas_map: Dict[str, Dict[str, Any]] = {}
+    for sig, created_dt in filtered:
+        area_key = f"{sig['area_name']}_{sig.get('map_lat', 30.4)}_{sig.get('map_lon', 76.8)}"
+        if area_key not in areas_map:
+            areas_map[area_key] = {
+                "area_name": sig["area_name"],
+                "map_lat": sig.get("map_lat", 30.4),
+                "map_lon": sig.get("map_lon", 76.8),
+                "signal_count": 0,
+                "conditions_count": {},
+                "last_signal_at": sig["created_at"],
+                "_last_dt": created_dt
+            }
+
+        item = areas_map[area_key]
+        item["signal_count"] += 1
+
+        cond_key = f"{sig['crop']}|||{sig['condition']}"
+        item["conditions_count"][cond_key] = item["conditions_count"].get(cond_key, 0) + 1
+
+        if created_dt > item["_last_dt"]:
+            item["last_signal_at"] = sig["created_at"]
+            item["_last_dt"] = created_dt
+
+    areas_list = []
+    for item in areas_map.values():
+        cnt = item["signal_count"]
+        if cnt >= 4:
+            act_level = "ELEVATED"
+        elif cnt >= 2:
+            act_level = "MODERATE"
+        else:
+            act_level = "LOW"
+
+        cond_list = []
+        for ck, count in item["conditions_count"].items():
+            crp, cond = ck.split("|||", 1)
+            cond_list.append({"crop": crp, "condition": cond, "count": count})
+        cond_list.sort(key=lambda x: x["count"], reverse=True)
+
+        areas_list.append({
+            "area_name": item["area_name"],
+            "map_lat": item["map_lat"],
+            "map_lon": item["map_lon"],
+            "signal_count": cnt,
+            "activity_level": act_level,
+            "conditions": cond_list,
+            "last_signal_at": item["last_signal_at"]
+        })
+
+    areas_list.sort(key=lambda x: x["signal_count"], reverse=True)
+
+    # 2. Daily Trend calculation
+    trend_map: Dict[str, int] = {}
+    for sig, created_dt in filtered:
+        d_str = created_dt.strftime("%Y-%m-%d")
+        trend_map[d_str] = trend_map.get(d_str, 0) + 1
+
+    sorted_dates = sorted(trend_map.keys())
+    daily_trend = [{"date": d, "signals": trend_map[d]} for d in sorted_dates]
+
+    # 3. Crop Breakdown & Summary
+    crop_map: Dict[str, int] = {}
+    cond_map: Dict[str, int] = {}
+    for sig, _ in filtered:
+        crp = sig["crop"]
+        cnd = sig["condition"]
+        crop_map[crp] = crop_map.get(crp, 0) + 1
+        cond_map[cnd] = cond_map.get(cnd, 0) + 1
+
+    crop_breakdown = [{"crop": c, "signals": count} for c, count in sorted(crop_map.items(), key=lambda x: x[1], reverse=True)]
+
+    top_crop = max(crop_map.items(), key=lambda x: x[1])[0] if crop_map else "None"
+    top_condition = max(cond_map.items(), key=lambda x: x[1])[0] if cond_map else "None"
+
+    recent_signals = [sig for sig, _ in sorted(filtered, key=lambda x: x[1], reverse=True)[:10]]
+
+    return {
+        "status": "success",
+        "mode": mode,
+        "filters": {
+            "days": days,
+            "crop": crop,
+            "condition": condition
+        },
+        "summary": {
+            "total_signals": len(filtered),
+            "active_areas": len(areas_list),
+            "most_reported_crop": top_crop,
+            "most_reported_condition": top_condition
+        },
+        "areas": areas_list,
+        "daily_trend": daily_trend,
+        "crop_breakdown": crop_breakdown,
+        "recent_signals": recent_signals,
+        "disclaimer": "Map locations are coarsened for farmer privacy. Signals represent community-reported assessments, not laboratory-confirmed cases."
+    }
+
+
 def _row_to_scan_dict(row: sqlite3.Row) -> Dict[str, Any]:
     keys = row.keys()
     return {

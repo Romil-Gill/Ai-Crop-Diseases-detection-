@@ -358,6 +358,29 @@ def api_get_community_summary():
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve community summary ({str(e)})."}), 500
 
+@app.route('/api/community-radar', methods=['GET'])
+def api_get_community_radar():
+    mode = request.args.get('mode', 'live')
+    days_raw = request.args.get('days', '7')
+    crop = request.args.get('crop', 'All')
+    condition = request.args.get('condition')
+
+    try:
+        days = int(days_raw)
+    except ValueError:
+        days = 7
+
+    if crop and crop.lower() != 'all':
+        valid_crops = {'tomato', 'rice', 'sugarcane', 'pumpkin'}
+        if crop.lower() not in valid_crops:
+            return jsonify({"error": f"Unsupported crop filter '{crop}'. Must be one of: Tomato, Rice, Sugarcane, Pumpkin, All."}), 400
+
+    try:
+        radar_data = database.get_community_radar(mode=mode, days=days, crop=crop, condition=condition)
+        return jsonify(radar_data), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve community radar ({str(e)})."}), 500
+
 @app.route('/api/symptom-questions', methods=['GET'])
 def api_symptom_questions():
     c_name = request.args.get('class_name')

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, ScanRecord, SaveScanResponse, ScansListResponse, CommunitySignalResponse, CommunitySignalsListResponse, CommunitySummaryResponse, SupportedCrop } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, ScanRecord, SaveScanResponse, ScansListResponse, CommunitySignalResponse, CommunitySignalsListResponse, CommunitySummaryResponse, CommunityRadarResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -279,6 +279,35 @@ export const getCommunitySummary = async (): Promise<CommunitySummaryResponse> =
       most_reported_condition: 'None',
       area_breakdown: [],
       disclaimer: 'Community signals represent anonymized user reports and are not laboratory-confirmed cases.',
+    };
+  }
+};
+
+export const getCommunityRadar = async (
+  mode: 'live' | 'demo' = 'live',
+  days: number = 7,
+  crop: string = 'All'
+): Promise<CommunityRadarResponse> => {
+  try {
+    const response = await apiClient.get<CommunityRadarResponse>('/api/community-radar', {
+      params: {
+        mode,
+        days,
+        crop: crop && crop.toLowerCase() !== 'all' ? crop : 'All',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    return {
+      status: 'error',
+      mode,
+      filters: { days, crop },
+      summary: { total_signals: 0, active_areas: 0, most_reported_crop: 'None', most_reported_condition: 'None' },
+      areas: [],
+      daily_trend: [],
+      crop_breakdown: [],
+      recent_signals: [],
+      disclaimer: 'Map locations are coarsened for farmer privacy. Signals represent community reports, not laboratory cases.',
     };
   }
 };
