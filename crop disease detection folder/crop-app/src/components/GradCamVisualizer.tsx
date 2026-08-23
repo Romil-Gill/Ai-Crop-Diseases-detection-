@@ -12,11 +12,11 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
   originalImageUrl,
 }) => {
   const [opacity, setOpacity] = useState<number>(0.65);
-  const [viewMode, setViewMode] = useState<'overlay' | 'original' | 'sideBySide'>('overlay');
+  const [viewMode, setViewMode] = useState<'overlay' | 'sideBySide'>('overlay');
   const [showDetails, setShowDetails] = useState<boolean>(false);
 
   return (
-    <div className="glass-panel p-6 rounded-2xl border border-[var(--color-primary)]/20 shadow-xl bg-white/90 backdrop-blur-md transition-all duration-300">
+    <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-[var(--color-primary)]/20 shadow-xl bg-white/95 backdrop-blur-md transition-all duration-300">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-emerald-900/10">
         <div>
@@ -24,16 +24,16 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
             <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
             <span>Grad-CAM Explainability</span>
           </div>
-          <h3 className="text-xl font-bold font-heading text-slate-900">
+          <h3 className="text-xl sm:text-2xl font-bold font-heading text-slate-900">
             Why did the AI choose this?
           </h3>
           <p className="text-sm text-slate-600 mt-1">
-            Highlighted regions had the strongest influence on the AI's diagnosis.
+            Highlighted regions had the strongest influence on the AI's prediction.
           </p>
         </div>
 
         {/* View mode toggle */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100/90 border border-slate-200 self-start sm:self-center">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100/90 border border-slate-200 self-start sm:self-center shrink-0">
           <button
             type="button"
             onClick={() => setViewMode('overlay')}
@@ -44,7 +44,7 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
             }`}
           >
             <Layers className="w-3.5 h-3.5" />
-            Overlay
+            Overlay View
           </button>
           <button
             type="button"
@@ -56,21 +56,21 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            Compare
+            Side-by-Side
           </button>
         </div>
       </div>
 
-      {/* Main Image Frame Container */}
+      {/* Main Content Area */}
       <div className="mt-6">
         {viewMode === 'sideBySide' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Original Image Card */}
-            <div className="flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+            <div className="flex flex-col items-center bg-slate-50 p-5 rounded-2xl border border-slate-200">
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">
                 Original Uploaded Leaf
               </span>
-              <div className="relative aspect-square w-full max-w-[280px] rounded-lg overflow-hidden border border-slate-300 shadow-sm bg-black/5">
+              <div className="relative aspect-square w-full max-w-[320px] rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-black/5">
                 <img
                   src={originalImageUrl}
                   alt="Original Leaf"
@@ -80,11 +80,11 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
             </div>
 
             {/* AI Attention Heatmap Overlay Card */}
-            <div className="flex flex-col items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <span className="text-xs font-semibold text-[var(--color-primary-dark)] uppercase tracking-wider mb-2">
-                AI Attention Heatmap
+            <div className="flex flex-col items-center bg-slate-50 p-5 rounded-2xl border border-slate-200">
+              <span className="text-xs font-bold text-[var(--color-primary-dark)] uppercase tracking-wider mb-3">
+                AI Attention Heatmap Overlay
               </span>
-              <div className="relative aspect-square w-full max-w-[280px] rounded-lg overflow-hidden border border-slate-300 shadow-sm bg-black">
+              <div className="relative aspect-square w-full max-w-[320px] rounded-xl overflow-hidden border border-slate-300 shadow-sm bg-black">
                 <img
                   src={explanation.overlay}
                   alt="AI Attention Overlay"
@@ -94,59 +94,71 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col items-center">
-            {/* Interactive Single Overlay Viewer */}
-            <div className="relative aspect-square w-full max-w-[340px] rounded-2xl overflow-hidden border-2 border-emerald-900/20 shadow-lg bg-black group">
-              {/* Base Image */}
-              <img
-                src={originalImageUrl}
-                alt="Base Leaf"
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              {/* Heatmap Overlay with dynamic opacity */}
-              <img
-                src={explanation.overlay}
-                alt="Grad-CAM Overlay"
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ease-out"
-                style={{ opacity: opacity }}
-              />
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            {/* Left: Interactive Canvas Frame */}
+            <div className="md:col-span-6 flex justify-center">
+              <div className="relative aspect-square w-full max-w-[340px] rounded-2xl overflow-hidden border-2 border-emerald-900/20 shadow-lg bg-black">
+                <img
+                  src={originalImageUrl}
+                  alt="Base Leaf"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <img
+                  src={explanation.overlay}
+                  alt="Grad-CAM Overlay"
+                  className="absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ease-out"
+                  style={{ opacity: opacity }}
+                />
+              </div>
             </div>
 
-            {/* Opacity Control Slider */}
-            <div className="w-full max-w-[340px] mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-3">
-              <Sliders className="w-4 h-4 text-emerald-700 shrink-0" />
-              <span className="text-xs font-medium text-slate-700 shrink-0">
-                Heatmap Opacity:
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={opacity}
-                onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[var(--color-primary)]"
-              />
-              <span className="text-xs font-mono font-semibold text-slate-900 w-9 text-right shrink-0">
-                {Math.round(opacity * 100)}%
-              </span>
+            {/* Right: Controls & Spectrum Legend */}
+            <div className="md:col-span-6 space-y-5">
+              {/* Opacity Control Slider */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Sliders className="w-4 h-4 text-emerald-700" />
+                    Heatmap Blend Opacity
+                  </span>
+                  <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                    {Math.round(opacity * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={opacity}
+                  onChange={(e) => setOpacity(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[var(--color-primary)]"
+                />
+                <div className="flex justify-between text-[10px] text-slate-500 font-medium">
+                  <span>0% (Original Leaf)</span>
+                  <span>100% (Full AI Overlay)</span>
+                </div>
+              </div>
+
+              {/* Spectrum Legend */}
+              <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/60 space-y-2">
+                <div className="flex justify-between items-center text-xs font-bold text-emerald-950">
+                  <span>Attention Spectrum:</span>
+                  <span className="text-[11px] font-normal text-slate-600">Model Feature Weight</span>
+                </div>
+                <div className="h-4 w-full rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 via-yellow-400 to-red-600 shadow-inner" />
+                <div className="flex justify-between text-[10px] font-semibold text-slate-600">
+                  <span className="text-blue-700">Low Contribution</span>
+                  <span className="text-red-700">High Model Focus</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Color Legend */}
-      <div className="mt-5 p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/60 flex items-center justify-between text-xs text-slate-700">
-        <span className="font-semibold text-emerald-900">Attention Spectrum:</span>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-slate-500">Low</span>
-          <div className="h-3.5 w-32 rounded-full bg-gradient-to-r from-blue-600 via-cyan-400 via-yellow-400 to-red-600 shadow-inner" />
-          <span className="text-[11px] font-bold text-red-600">High Influence</span>
-        </div>
-      </div>
-
       {/* Expandable Technical Explainer for Judges */}
-      <div className="mt-4 border-t border-slate-200/80 pt-3">
+      <div className="mt-6 border-t border-slate-200/80 pt-4">
         <button
           type="button"
           onClick={() => setShowDetails(!showDetails)}
@@ -160,12 +172,12 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
         </button>
 
         {showDetails && (
-          <div className="mt-2 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2 leading-relaxed font-sans">
+          <div className="mt-2.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2 leading-relaxed font-sans">
             <p>
-              <strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> computes the gradients of the model's top predicted class score with respect to the final convolutional feature maps of the MobileNetV2 backbone (layer: <code className="font-mono text-emerald-800 bg-emerald-100/80 px-1 py-0.5 rounded">{explanation.target_layer}</code>).
+              <strong>Gradient-weighted Class Activation Mapping (Grad-CAM)</strong> computes the gradients of the top predicted class score with respect to the final convolutional feature maps of the MobileNetV2 backbone.
             </p>
             <p>
-              Spatial regions highlighted in warm colors (red/orange) represent specific leaf areas where visual features (spots, discoloration, pustules) most strongly influenced the neural network's classification decision.
+              Warm regions (red/orange) highlight specific leaf areas where spatial visual features (spots, lesions, pustules) most strongly influenced the neural network's classification.
             </p>
           </div>
         )}

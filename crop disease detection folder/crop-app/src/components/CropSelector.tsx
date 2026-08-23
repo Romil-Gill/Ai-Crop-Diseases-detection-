@@ -121,7 +121,6 @@ export const CropSelector: React.FC<CropSelectorProps> = ({ selectedCrop, onSele
                     <h4 className="font-extrabold text-base text-slate-900 font-outfit">
                       {crop.name}
                     </h4>
-                    <span className="text-xs text-slate-400 font-medium">{crop.hindiName}</span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
                     {crop.description}

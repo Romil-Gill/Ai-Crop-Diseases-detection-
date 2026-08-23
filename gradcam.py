@@ -18,9 +18,10 @@ def generate_gradcam(model, img_array, target_class_idx=None, original_pil_image
         target_layer_name = "mobilenetv2_1.00_224/out_relu"
         target_layer = base_model.get_layer("out_relu")
 
-        # Sub-model mapping base inputs -> target feature layer outputs
+        # Sub-model mapping base input tensor -> target feature layer outputs
+        base_input = base_model.input if hasattr(base_model, 'input') else base_model.inputs[0]
         conv_submodel = tf.keras.Model(
-            inputs=base_model.inputs,
+            inputs=base_input,
             outputs=target_layer.output
         )
 

@@ -30,7 +30,7 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ result }) => {
           )}
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              Verified AI Diagnosis
+              AI Crop Assessment
             </span>
             <h3 className="text-sm font-extrabold text-slate-900 font-outfit">
               {prediction.crop} Leaf Assessment

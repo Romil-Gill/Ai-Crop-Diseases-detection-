@@ -45,8 +45,33 @@ class_names = [
 
 SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
 
+HUMAN_CONDITION_MAP = {
+    "bacterialblight": "Bacterial Blight",
+    "downymildew": "Downy Mildew",
+    "mosaicdisease": "Mosaic Disease",
+    "powderymildew": "Powdery Mildew",
+    "brownspot": "Brown Spot",
+    "leafsmut": "Leaf Smut",
+    "bacterial spot": "Bacterial Spot",
+    "early blight": "Early Blight",
+    "late blight": "Late Blight",
+    "leaf mold": "Leaf Mold",
+    "septoria leaf spot": "Septoria Leaf Spot",
+    "spider mites two-spotted spider mite": "Spider Mites (Two-Spotted)",
+    "target spot": "Target Spot",
+    "tomato yellow leaf curl virus": "Yellow Leaf Curl Virus",
+    "tomato mosaic virus": "Mosaic Virus",
+    "pokkah boeng": "Pokkah Boeng",
+    "red leaf spot": "Red Leaf Spot",
+    "red rot": "Red Rot",
+    "ring spot": "Ring Spot",
+    "yellow leaf disease": "Yellow Leaf Disease",
+    "grassy shoot": "Grassy Shoot",
+    "healthy": "Healthy"
+}
+
 def parse_class_info(class_name):
-    """Parses a class string into crop, condition, and healthy status."""
+    """Parses a class string into crop, condition, and healthy status with human-readable formatting."""
     if '___' in class_name:
         crop, condition_raw = class_name.split('___', 1)
     elif '-' in class_name:
@@ -55,8 +80,11 @@ def parse_class_info(class_name):
         crop, condition_raw = "Unknown", class_name
     
     crop = crop.strip()
-    condition = condition_raw.replace('_', ' ').strip()
-    is_healthy = 'healthy' in condition.lower()
+    cond_clean = condition_raw.replace('_', ' ').strip()
+    cond_lower = cond_clean.lower()
+    
+    condition = HUMAN_CONDITION_MAP.get(cond_lower, cond_clean.title())
+    is_healthy = 'healthy' in cond_lower
     return crop, condition, is_healthy
 
 def allowed_file(filename):
@@ -391,4 +419,5 @@ def api_explain():
         return jsonify({"error": f"Grad-CAM explanation error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    use_reloader = os.environ.get("FLASK_RELOAD", "false").lower() == "true"
+    app.run(debug=True, use_reloader=use_reloader, port=5000)

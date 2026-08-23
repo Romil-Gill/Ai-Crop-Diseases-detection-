@@ -142,8 +142,8 @@ export const App: React.FC = () => {
               <span className="text-[11px] font-semibold text-slate-500">Disease & Healthy</span>
             </div>
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
-              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">Real</span>
-              <span className="text-[11px] font-semibold text-slate-500">TensorFlow AI</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">Grad-CAM</span>
+              <span className="text-[11px] font-semibold text-slate-500">Explainable AI</span>
             </div>
           </div>
         </section>
