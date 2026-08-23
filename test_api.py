@@ -393,5 +393,29 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertNotIn('cnn_confidence', params, "evaluate_symptom_verification must NOT accept 'cnn_confidence' parameter")
         print("[TEST 23 PASSED] CNN confidence isolation strictly verified in concern scoring logic.")
 
+    def test_24_programmatic_symptom_coverage_audit(self):
+        """Programmatic Coverage Audit: Assert 100% 24/24 disease class coverage in SYMPTOM_QUESTIONS"""
+        from app import class_names
+        from symptom_data import SYMPTOM_QUESTIONS
+
+        all_classes = set(class_names)
+        self.assertEqual(len(all_classes), 27, f"Expected 27 total model classes, found {len(all_classes)}")
+
+        healthy_classes = {c for c in all_classes if 'healthy' in c.lower()}
+        self.assertEqual(len(healthy_classes), 3, f"Expected 3 healthy classes, found {len(healthy_classes)}")
+
+        disease_classes = {c for c in all_classes if 'healthy' not in c.lower()}
+        self.assertEqual(len(disease_classes), 24, f"Expected 24 disease classes, found {len(disease_classes)}")
+
+        symptom_classes = set(SYMPTOM_QUESTIONS.keys())
+
+        # Exact set equality assertion
+        self.assertEqual(
+            disease_classes,
+            symptom_classes,
+            f"Symptom question coverage mismatch! Missing: {disease_classes - symptom_classes}, Extra: {symptom_classes - disease_classes}"
+        )
+        print("[TEST 24 PASSED] Programmatic Symptom Coverage Audit: 100% 24/24 disease classes covered.")
+
 if __name__ == '__main__':
     unittest.main()

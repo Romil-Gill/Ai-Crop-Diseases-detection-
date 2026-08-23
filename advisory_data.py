@@ -9,8 +9,8 @@ ADVISORY_DATABASE = {
     # -------------------------------------------------------------------------
     # PUMPKIN CLASSES (5)
     # -------------------------------------------------------------------------
-    "Pumpkin-Bacterialblight": {
-        "class_name": "Pumpkin-Bacterialblight",
+    "Pumpkin-Bacterial Leaf Spot": {
+        "class_name": "Pumpkin-Bacterial Leaf Spot",
         "crop": "Pumpkin",
         "condition": "Bacterial Blight",
         "is_healthy": False,
@@ -52,8 +52,8 @@ ADVISORY_DATABASE = {
             }
         ]
     },
-    "Pumpkin-Downymildew": {
-        "class_name": "Pumpkin-Downymildew",
+    "Pumpkin-Downy Mildew": {
+        "class_name": "Pumpkin-Downy Mildew",
         "crop": "Pumpkin",
         "condition": "Downy Mildew",
         "is_healthy": False,
@@ -88,8 +88,8 @@ ADVISORY_DATABASE = {
             }
         ]
     },
-    "Pumpkin-Healthy": {
-        "class_name": "Pumpkin-Healthy",
+    "Pumpkin-Healthy Leaf": {
+        "class_name": "Pumpkin-Healthy Leaf",
         "crop": "Pumpkin",
         "condition": "Healthy",
         "is_healthy": True,
@@ -121,8 +121,8 @@ ADVISORY_DATABASE = {
             }
         ]
     },
-    "Pumpkin-Mosaicdisease": {
-        "class_name": "Pumpkin-Mosaicdisease",
+    "Pumpkin-Mosaic Disease": {
+        "class_name": "Pumpkin-Mosaic Disease",
         "crop": "Pumpkin",
         "condition": "Mosaic Disease",
         "is_healthy": False,
@@ -157,8 +157,8 @@ ADVISORY_DATABASE = {
             }
         ]
     },
-    "Pumpkin-Powderymildew": {
-        "class_name": "Pumpkin-Powderymildew",
+    "Pumpkin-Powdery_Mildew": {
+        "class_name": "Pumpkin-Powdery_Mildew",
         "crop": "Pumpkin",
         "condition": "Powdery Mildew",
         "is_healthy": False,
@@ -421,8 +421,8 @@ ADVISORY_DATABASE = {
             }
         ]
     },
-    "Sugarcane-Pokkah boeng": {
-        "class_name": "Sugarcane-Pokkah boeng",
+    "Sugarcane-Pokkah Boeng": {
+        "class_name": "Sugarcane-Pokkah Boeng",
         "crop": "Sugarcane",
         "condition": "Pokkah Boeng",
         "is_healthy": False,

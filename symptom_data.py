@@ -6,9 +6,9 @@ Strictly separates CNN model confidence from user-reported symptom agreement.
 
 SYMPTOM_QUESTIONS = {
     # -------------------------------------------------------------------------
-    # PUMPKIN DISEASE CLASSES
+    # PUMPKIN DISEASE CLASSES (4)
     # -------------------------------------------------------------------------
-    "Pumpkin-Bacterialblight": [
+    "Pumpkin-Bacterial Leaf Spot": [
         {
             "id": "water_soaked_spots",
             "question": "Are there small, angular, water-soaked spots on the leaf blade?",
@@ -25,7 +25,7 @@ SYMPTOM_QUESTIONS = {
             "weight": 1.0
         }
     ],
-    "Pumpkin-Downymildew": [
+    "Pumpkin-Downy Mildew": [
         {
             "id": "angular_yellow_patches",
             "question": "Are there angular yellow patches on the upper leaf surface bounded by veins?",
@@ -42,7 +42,7 @@ SYMPTOM_QUESTIONS = {
             "weight": 1.0
         }
     ],
-    "Pumpkin-Mosaicdisease": [
+    "Pumpkin-Mosaic Disease": [
         {
             "id": "mottled_pattern",
             "question": "Does the leaf exhibit a patchy light and dark green mottled mosaic pattern?",
@@ -59,7 +59,7 @@ SYMPTOM_QUESTIONS = {
             "weight": 1.0
         }
     ],
-    "Pumpkin-Powderymildew": [
+    "Pumpkin-Powdery_Mildew": [
         {
             "id": "white_powdery_patches",
             "question": "Are white, talcum-like powdery spots visible on the upper or lower leaf surface?",
@@ -78,7 +78,7 @@ SYMPTOM_QUESTIONS = {
     ],
 
     # -------------------------------------------------------------------------
-    # RICE DISEASE CLASSES
+    # RICE DISEASE CLASSES (3)
     # -------------------------------------------------------------------------
     "Rice-Bacterialblight": [
         {
@@ -133,7 +133,7 @@ SYMPTOM_QUESTIONS = {
     ],
 
     # -------------------------------------------------------------------------
-    # SUGARCANE DISEASE CLASSES
+    # SUGARCANE DISEASE CLASSES (8)
     # -------------------------------------------------------------------------
     "Sugarcane-Grassy Shoot": [
         {
@@ -164,7 +164,7 @@ SYMPTOM_QUESTIONS = {
             "weight": 1.0
         }
     ],
-    "Sugarcane-Pokkah boeng": [
+    "Sugarcane-Pokkah Boeng": [
         {
             "id": "twisted_top_leaves",
             "question": "Are top spindle leaves wrinkled, twisted, or distorted at the base?",
@@ -253,7 +253,7 @@ SYMPTOM_QUESTIONS = {
     ],
 
     # -------------------------------------------------------------------------
-    # TOMATO DISEASE CLASSES
+    # TOMATO DISEASE CLASSES (9)
     # -------------------------------------------------------------------------
     "Tomato___Bacterial_spot": [
         {
