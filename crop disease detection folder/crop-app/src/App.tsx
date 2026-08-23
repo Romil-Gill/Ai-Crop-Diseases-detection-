@@ -14,7 +14,12 @@ import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
 import { ErrorState } from './components/ErrorState';
 
-import type { SupportedCrop, PredictResponse } from './types/api';
+import { SaveAssessmentButton } from './components/SaveAssessmentButton';
+import { CommunityShareCard } from './components/CommunityShareCard';
+import { HistoryPage } from './components/HistoryPage';
+import { CommunityPage } from './components/CommunityPage';
+
+import type { SupportedCrop, PredictResponse, ScanRecord } from './types/api';
 import { checkHealth, explainDisease } from './services/api';
 import { Sparkles, ArrowRight, RefreshCcw } from 'lucide-react';
 
@@ -28,6 +33,8 @@ export const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<PredictResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [activeView, setActiveView] = useState<'home' | 'history' | 'community'>('home');
+  const [savedScanRecord, setSavedScanRecord] = useState<ScanRecord | null>(null);
 
   const scannerRef = useRef<HTMLDivElement>(null);
 
@@ -104,11 +111,22 @@ export const App: React.FC = () => {
       <Header 
         serverOnline={serverOnline}
         selectedCrop={selectedCrop}
+        activeView={activeView}
+        onNavigateView={(v) => setActiveView(v)}
         onReset={handleResetAll}
       />
 
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-10">
-        
+        {activeView === 'history' && (
+          <HistoryPage onNavigateHome={() => setActiveView('home')} />
+        )}
+
+        {activeView === 'community' && (
+          <CommunityPage />
+        )}
+
+        {activeView === 'home' && (
+          <>
         {/* HERO SECTION */}
         <section className="text-center max-w-3xl mx-auto space-y-4 pt-4 sm:pt-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-2xs">
@@ -257,6 +275,27 @@ export const App: React.FC = () => {
                 selectedCrop={selectedCrop}
               />
 
+              {/* 5. Save Assessment Action Row */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900 text-white shadow-lg border border-slate-800">
+                <div>
+                  <h4 className="font-extrabold font-outfit text-base text-white">Save Assessment to Local History</h4>
+                  <p className="text-xs text-slate-300">Store this reliable assessment record in SQLite for crop health timeline tracking.</p>
+                </div>
+                <SaveAssessmentButton
+                  crop={analysisResult.prediction.crop}
+                  className={analysisResult.prediction.class_name}
+                  condition={analysisResult.prediction.condition}
+                  confidence={analysisResult.prediction.confidence}
+                  isHealthy={analysisResult.is_healthy}
+                  onSaved={(scan) => setSavedScanRecord(scan)}
+                />
+              </div>
+
+              {/* 6. Community Signal Opt-in Card */}
+              {savedScanRecord && (
+                <CommunityShareCard savedScan={savedScanRecord} />
+              )}
+
               {/* Action Button to Scan Another Leaf */}
               <div className="text-center pt-2">
                 <button
@@ -281,6 +320,8 @@ export const App: React.FC = () => {
           )}
 
         </section>
+        </>
+        )}
       </main>
 
       {/* Footer */}

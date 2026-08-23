@@ -165,6 +165,77 @@ export interface WeatherContextResponse {
   message?: string;
 }
 
+export interface ScanRecord {
+  id: number;
+  created_at: string;
+  crop: string;
+  class_name: string;
+  condition: string;
+  model_confidence: number;
+  is_healthy: boolean;
+  symptom_agreement?: string | null;
+  symptom_match_score?: number | null;
+  field_concern?: string | null;
+  weather_favorability?: string | null;
+  location_name?: string | null;
+  community_shared: boolean;
+}
+
+export interface SaveScanResponse {
+  status: string;
+  message?: string;
+  scan: ScanRecord;
+}
+
+export interface ScansListResponse {
+  status: string;
+  total: number;
+  scans: ScanRecord[];
+}
+
+export interface CommunitySignalRecord {
+  id: number;
+  created_at: string;
+  source_scan_id: number;
+  crop: string;
+  class_name: string;
+  condition: string;
+  area_name: string;
+  approx_lat?: number;
+  approx_lon?: number;
+  symptom_agreement?: string | null;
+  field_concern?: string | null;
+  weather_favorability?: string | null;
+  status: string;
+}
+
+export interface CommunitySignalResponse {
+  status: string;
+  message?: string;
+  signal: CommunitySignalRecord;
+}
+
+export interface CommunitySignalsListResponse {
+  status: string;
+  total: number;
+  signals: CommunitySignalRecord[];
+}
+
+export interface AreaBreakdownItem {
+  area_name: string;
+  condition: string;
+  reported_signals: number;
+}
+
+export interface CommunitySummaryResponse {
+  status: string;
+  total_reported_signals: number;
+  signals_last_7_days: number;
+  most_reported_condition: string;
+  area_breakdown: AreaBreakdownItem[];
+  disclaimer: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;

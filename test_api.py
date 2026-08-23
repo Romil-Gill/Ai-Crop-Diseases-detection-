@@ -559,5 +559,147 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertNotIn('concern_level', params)
         print("[TEST 33 PASSED] Weather favorability scoring strict independence verified.")
 
+    def test_34_database_init(self):
+        """Test SQLite database initialization and table structure"""
+        import database
+        database.init_db()
+        scans = database.get_scans()
+        self.assertIsInstance(scans, list)
+        print("[TEST 34 PASSED] SQLite database & tables auto-initialized cleanly.")
+
+    def test_35_save_scan_endpoint(self):
+        """Test POST /api/scans saving a reliable assessment record"""
+        payload = {
+            "crop": "Rice",
+            "class_name": "Rice-Bacterialblight",
+            "condition": "Bacterial Blight",
+            "model_confidence": 98.5,
+            "is_healthy": False,
+            "symptom_agreement": "high",
+            "symptom_match_score": 1.0,
+            "field_concern": "HIGH",
+            "weather_favorability": "HIGH",
+            "location_name": "Ambala, Haryana"
+        }
+        res = self.client.post('/api/scans', json=payload)
+        self.assertEqual(res.status_code, 201)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertEqual(j['scan']['crop'], 'Rice')
+        self.assertEqual(j['scan']['location_name'], 'Ambala, Haryana')
+        print("[TEST 35 PASSED] POST /api/scans saved reliable assessment record to SQLite.")
+
+    def test_36_save_scan_validation(self):
+        """Test POST /api/scans validation for unsupported class or missing data"""
+        res = self.client.post('/api/scans', json={"class_name": "InvalidClass"})
+        self.assertEqual(res.status_code, 400)
+        print("[TEST 36 PASSED] POST /api/scans rejected invalid class_name.")
+
+    def test_37_get_scans_list_and_single(self):
+        """Test GET /api/scans list and GET /api/scans/<id> single scan retrieval"""
+        payload = {
+            "crop": "Tomato",
+            "class_name": "Tomato___Early_blight",
+            "condition": "Early Blight",
+            "model_confidence": 95.0,
+            "is_healthy": False,
+            "location_name": "Karnal, Haryana"
+        }
+        res_post = self.client.post('/api/scans', json=payload)
+        scan_id = res_post.get_json()['scan']['id']
+
+        res_list = self.client.get('/api/scans')
+        self.assertEqual(res_list.status_code, 200)
+        self.assertTrue(res_list.get_json()['total'] >= 1)
+
+        res_single = self.client.get(f'/api/scans/{scan_id}')
+        self.assertEqual(res_single.status_code, 200)
+        self.assertEqual(res_single.get_json()['scan']['condition'], 'Early Blight')
+        print("[TEST 37 PASSED] Scans list & single scan endpoints verified.")
+
+    def test_38_delete_scan(self):
+        """Test DELETE /api/scans/<id> removing a scan record"""
+        payload = {
+            "crop": "Pumpkin",
+            "class_name": "Pumpkin-Powdery_Mildew",
+            "condition": "Powdery Mildew",
+            "model_confidence": 90.0,
+            "is_healthy": False
+        }
+        res_post = self.client.post('/api/scans', json=payload)
+        scan_id = res_post.get_json()['scan']['id']
+
+        res_del = self.client.delete(f'/api/scans/{scan_id}')
+        self.assertEqual(res_del.status_code, 200)
+
+        res_get = self.client.get(f'/api/scans/{scan_id}')
+        self.assertEqual(res_get.status_code, 404)
+        print("[TEST 38 PASSED] DELETE /api/scans/<id> successfully removed scan record.")
+
+    def test_39_share_community_signal_success(self):
+        """Test POST /api/community-signals opt-in sharing from reliable disease scan"""
+        payload = {
+            "crop": "Rice",
+            "class_name": "Rice-Brownspot",
+            "condition": "Brown Spot",
+            "model_confidence": 97.0,
+            "is_healthy": False,
+            "location_name": "Ambala"
+        }
+        res_post = self.client.post('/api/scans', json=payload)
+        scan_id = res_post.get_json()['scan']['id']
+
+        res_share = self.client.post('/api/community-signals', json={"scan_id": scan_id, "approx_lat": 30.3782, "approx_lon": 76.7767})
+        self.assertEqual(res_share.status_code, 201)
+        j = res_share.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertEqual(j['signal']['approx_lat'], 30.38)
+        print("[TEST 39 PASSED] Opt-in community signal created with coarsened coordinates.")
+
+    def test_40_share_community_signal_healthy_rejected(self):
+        """Test that healthy crop scans CANNOT be submitted as disease signals"""
+        payload = {
+            "crop": "Sugarcane",
+            "class_name": "Sugarcane-Healthy",
+            "condition": "Healthy",
+            "model_confidence": 99.0,
+            "is_healthy": True
+        }
+        res_post = self.client.post('/api/scans', json=payload)
+        scan_id = res_post.get_json()['scan']['id']
+
+        res_share = self.client.post('/api/community-signals', json={"scan_id": scan_id})
+        self.assertEqual(res_share.status_code, 400)
+        self.assertIn("healthy", res_share.get_json()['error'].lower())
+        print("[TEST 40 PASSED] Healthy crop assessment sharing attempt correctly rejected.")
+
+    def test_41_get_community_signals_sanitized_privacy(self):
+        """Privacy Safety Test: Verify community API responses NEVER expose raw GPS or image paths"""
+        res = self.client.get('/api/community-signals')
+        self.assertEqual(res.status_code, 200)
+        signals = res.get_json()['signals']
+
+        for sig in signals:
+            self.assertNotIn('image_path', sig)
+            self.assertNotIn('image_url', sig)
+            self.assertNotIn('raw_gps', sig)
+            if sig.get('approx_lat') is not None:
+                lat_str = str(sig['approx_lat'])
+                if '.' in lat_str:
+                    decimals = len(lat_str.split('.')[1])
+                    self.assertTrue(decimals <= 2, f"Excessive GPS precision '{lat_str}' in public signal!")
+        print("[TEST 41 PASSED] Privacy Safety Test: Community signals contain zero image paths or raw GPS.")
+
+    def test_42_get_community_summary_aggregates(self):
+        """Test GET /api/community-summary aggregate stats endpoint"""
+        res = self.client.get('/api/community-summary')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertIn('total_reported_signals', j)
+        self.assertIn('signals_last_7_days', j)
+        self.assertIn('area_breakdown', j)
+        print("[TEST 42 PASSED] GET /api/community-summary returned correct aggregate statistics.")
+
 if __name__ == '__main__':
     unittest.main()

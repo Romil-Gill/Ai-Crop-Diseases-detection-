@@ -5,17 +5,28 @@ import type { SupportedCrop } from '../types/api';
 interface HeaderProps {
   serverOnline: boolean | null;
   selectedCrop: SupportedCrop | null;
+  activeView?: 'home' | 'history' | 'community';
+  onNavigateView?: (view: 'home' | 'history' | 'community') => void;
   onReset: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ serverOnline, selectedCrop, onReset }) => {
+export const Header: React.FC<HeaderProps> = ({
+  serverOnline,
+  selectedCrop,
+  activeView = 'home',
+  onNavigateView,
+  onReset,
+}) => {
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-slate-200/80 shadow-xs">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
         {/* Brand Logo & Name */}
         <div 
-          onClick={onReset}
+          onClick={() => {
+            if (onNavigateView) onNavigateView('home');
+            onReset();
+          }}
           className="flex items-center gap-3 cursor-pointer group transition-all"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-700 to-green-600 flex items-center justify-center text-white shadow-md shadow-emerald-700/20 group-hover:scale-105 transition-transform">
@@ -35,6 +46,45 @@ export const Header: React.FC<HeaderProps> = ({ serverOnline, selectedCrop, onRe
             </p>
           </div>
         </div>
+
+        {/* Center Navigation Tabs */}
+        {onNavigateView && (
+          <nav className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 font-outfit">
+            <button
+              type="button"
+              onClick={() => onNavigateView('home')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                activeView === 'home'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Home
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateView('history')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                activeView === 'history'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              History
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigateView('community')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all ${
+                activeView === 'community'
+                  ? 'bg-white text-slate-900 shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Community
+            </button>
+          </nav>
+        )}
 
         {/* Status Indicators & Selected Crop Badge */}
         <div className="flex items-center gap-3">

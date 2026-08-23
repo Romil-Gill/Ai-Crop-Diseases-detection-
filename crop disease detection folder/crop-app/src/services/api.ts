@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, SupportedCrop } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, ScanRecord, SaveScanResponse, ScansListResponse, CommunitySignalResponse, CommunitySignalsListResponse, CommunitySummaryResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -200,6 +200,86 @@ export const getWeatherContext = async (
       };
     }
     throw new Error('Network error while retrieving weather context.');
+  }
+};
+
+export const saveScan = async (scanData: Partial<ScanRecord>): Promise<SaveScanResponse> => {
+  try {
+    const response = await apiClient.post<SaveScanResponse>('/api/scans', scanData);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || 'Assessment could not be saved.');
+    }
+    throw new Error('Network error while saving assessment.');
+  }
+};
+
+export const getScans = async (crop?: string): Promise<ScansListResponse> => {
+  try {
+    const response = await apiClient.get<ScansListResponse>('/api/scans', {
+      params: crop && crop.toLowerCase() !== 'all' ? { crop } : {},
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      return { status: 'error', total: 0, scans: [] };
+    }
+    return { status: 'error', total: 0, scans: [] };
+  }
+};
+
+export const deleteScan = async (scanId: number): Promise<boolean> => {
+  try {
+    const response = await apiClient.delete<{ status: string }>(`/api/scans/${scanId}`);
+    return response.data.status === 'success';
+  } catch (error) {
+    return false;
+  }
+};
+
+export const shareCommunitySignal = async (
+  scanId: number,
+  approxLat?: number,
+  approxLon?: number
+): Promise<CommunitySignalResponse> => {
+  try {
+    const response = await apiClient.post<CommunitySignalResponse>('/api/community-signals', {
+      scan_id: scanId,
+      approx_lat: approxLat,
+      approx_lon: approxLon,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || 'Failed to share community signal.');
+    }
+    throw new Error('Network error while sharing community signal.');
+  }
+};
+
+export const getCommunitySignals = async (): Promise<CommunitySignalsListResponse> => {
+  try {
+    const response = await apiClient.get<CommunitySignalsListResponse>('/api/community-signals');
+    return response.data;
+  } catch (error) {
+    return { status: 'error', total: 0, signals: [] };
+  }
+};
+
+export const getCommunitySummary = async (): Promise<CommunitySummaryResponse> => {
+  try {
+    const response = await apiClient.get<CommunitySummaryResponse>('/api/community-summary');
+    return response.data;
+  } catch (error) {
+    return {
+      status: 'error',
+      total_reported_signals: 0,
+      signals_last_7_days: 0,
+      most_reported_condition: 'None',
+      area_breakdown: [],
+      disclaimer: 'Community signals represent anonymized user reports and are not laboratory-confirmed cases.',
+    };
   }
 };
 

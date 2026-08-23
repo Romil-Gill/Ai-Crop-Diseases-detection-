@@ -46,6 +46,9 @@ uploads/*
 tmp/
 temp/
 *.log
+*.db
+fasalrakshak.db
+fasalrakshak_test.db
 
 # Editor & OS files
 .DS_Store

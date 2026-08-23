@@ -173,6 +173,13 @@ def predict_api():
 from advisory_data import ADVISORY_DATABASE
 from symptom_data import SYMPTOM_QUESTIONS, FIELD_SPREAD_OPTIONS, evaluate_symptom_verification
 from weather_service import search_location, fetch_weather_context
+import database
+
+# Initialize SQLite database tables automatically
+try:
+    database.init_db()
+except Exception as e:
+    print(f"[DATABASE WARNING] SQLite init_db warning: {e}")
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
@@ -232,6 +239,109 @@ def api_weather_context():
 
     res = fetch_weather_context(lat, lon, c_name, location_name=loc_name)
     return jsonify(res), 200
+
+# --- SCAN HISTORY & COMMUNITY SIGNALS ENDPOINTS (FasalRakshak AI Phase 6) ---
+
+@app.route('/api/scans', methods=['POST'])
+def api_save_scan():
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+    c_name = data.get('class_name')
+    if not c_name or c_name not in class_names:
+        return jsonify({"error": f"Invalid or unsupported class_name '{c_name}'."}), 400
+
+    try:
+        scan_record = database.create_scan(data)
+        return jsonify({
+            "status": "success",
+            "message": "Assessment record saved successfully.",
+            "scan": scan_record
+        }), 201
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Assessment could not be saved ({str(e)})."
+        }), 500
+
+@app.route('/api/scans', methods=['GET'])
+def api_get_scans():
+    crop_filter = request.args.get('crop')
+    try:
+        scans = database.get_scans(crop_filter=crop_filter)
+        return jsonify({
+            "status": "success",
+            "total": len(scans),
+            "scans": scans
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve scan history ({str(e)})."}), 500
+
+@app.route('/api/scans/<int:scan_id>', methods=['GET'])
+def api_get_scan_by_id(scan_id):
+    try:
+        scan = database.get_scan_by_id(scan_id)
+        if not scan:
+            return jsonify({"error": f"Scan record #{scan_id} not found."}), 404
+        return jsonify({"status": "success", "scan": scan}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve scan ({str(e)})."}), 500
+
+@app.route('/api/scans/<int:scan_id>', methods=['DELETE'])
+def api_delete_scan(scan_id):
+    try:
+        deleted = database.delete_scan(scan_id)
+        if not deleted:
+            return jsonify({"error": f"Scan record #{scan_id} not found."}), 404
+        return jsonify({"status": "success", "message": f"Scan #{scan_id} deleted."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to delete scan ({str(e)})."}), 500
+
+@app.route('/api/community-signals', methods=['POST'])
+def api_create_community_signal():
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+    scan_id = data.get('scan_id')
+    if not scan_id:
+        return jsonify({"error": "Missing required field 'scan_id'"}), 400
+
+    approx_lat = data.get('approx_lat')
+    approx_lon = data.get('approx_lon')
+
+    try:
+        signal = database.create_community_signal(int(scan_id), approx_lat=approx_lat, approx_lon=approx_lon)
+        return jsonify({
+            "status": "success",
+            "message": "Anonymized community disease signal shared successfully.",
+            "signal": signal
+        }), 201
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to share community signal ({str(e)})."}), 500
+
+@app.route('/api/community-signals', methods=['GET'])
+def api_get_community_signals():
+    try:
+        signals = database.get_community_signals()
+        return jsonify({
+            "status": "success",
+            "total": len(signals),
+            "signals": signals
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve community signals ({str(e)})."}), 500
+
+@app.route('/api/community-summary', methods=['GET'])
+def api_get_community_summary():
+    try:
+        summary = database.get_community_summary()
+        return jsonify(summary), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to retrieve community summary ({str(e)})."}), 500
 
 @app.route('/api/symptom-questions', methods=['GET'])
 def api_symptom_questions():
