@@ -260,8 +260,9 @@ class TestFasalRakshakAPI(unittest.TestCase):
                 self.assertTrue(url.startswith('http://') or url.startswith('https://'), f"Invalid URL '{url}' in source for '{c_name}'")
                 stype = src.get('source_type')
                 self.assertIn(stype, valid_source_types, f"Invalid or missing source_type '{stype}' for '{c_name}'")
+                self.assertTrue(src.get('verified_url') is True, f"Source URL not marked as verified_url=True for '{c_name}'")
 
-        print(f"[TEST 14 PASSED] 100% Advisory Data Coverage & Source Metadata verified across all {len(class_names)} model classes.")
+        print(f"[TEST 14 PASSED] 100% Advisory Data Coverage & Verified Source URLs verified across all {len(class_names)} model classes.")
 
     def test_15_advisory_safety_no_chemical_fields(self):
         """Safety Test: Ensure advisory database contains NO forbidden chemical fields or recommendations"""

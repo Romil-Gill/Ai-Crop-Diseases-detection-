@@ -38,6 +38,7 @@ export interface AdvisorySource {
   title: string;
   url: string;
   source_type?: string;
+  verified_url?: boolean;
 }
 
 export interface AdvisoryContent {
