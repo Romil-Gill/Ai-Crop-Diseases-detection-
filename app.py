@@ -267,5 +267,128 @@ def api_predict():
     except Exception as e:
         return jsonify({"error": f"Model inference error: {str(e)}"}), 500
 
+from gradcam import generate_gradcam
+
+@app.route('/api/explain', methods=['POST'])
+def api_explain():
+    if model is None:
+        return jsonify({"error": "ML model is not loaded"}), 500
+
+    if 'file' not in request.files:
+        return jsonify({"error": "No image file provided in request"}), 400
+    
+    file = request.files['file']
+    if not file or file.filename == '':
+        return jsonify({"error": "No image file selected"}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({"error": f"Invalid file type. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}"}), 400
+
+    selected_crop = request.form.get('selected_crop') or request.args.get('selected_crop')
+    if selected_crop:
+        selected_crop = selected_crop.strip()
+        matched_crop = next((c for c in SUPPORTED_CROPS if c.lower() == selected_crop.lower()), None)
+        if not matched_crop:
+            return jsonify({
+                "error": f"Unsupported selected_crop '{selected_crop}'. Supported crops: {', '.join(SUPPORTED_CROPS)}"
+            }), 400
+        selected_crop = matched_crop
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+
+    try:
+        with Image.open(filepath) as img_check:
+            img_check.verify()
+    except Exception:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        return jsonify({"error": "Uploaded file is not a valid or readable image"}), 400
+
+    try:
+        pil_img = Image.open(filepath).convert('RGB')
+        img = image.load_img(filepath, target_size=(224, 224))
+        img_array = image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0) / 255.0
+
+        predictions = model.predict(img_array)[0]
+        
+        all_preds = []
+        for idx, prob in enumerate(predictions):
+            conf_pct = float(prob * 100)
+            c_name = class_names[idx]
+            crop, condition, is_healthy = parse_class_info(c_name)
+            all_preds.append({
+                "index": idx,
+                "class_name": c_name,
+                "crop": crop,
+                "condition": condition,
+                "confidence": round(conf_pct, 2),
+                "is_healthy": is_healthy
+            })
+        
+        all_preds.sort(key=lambda x: x['confidence'], reverse=True)
+        top1 = all_preds[0]
+        top2 = all_preds[1] if len(all_preds) > 1 else None
+        top3 = all_preds[:3]
+
+        diagnosis_reliable = True
+        uncertainty_reason = None
+
+        top1_conf = top1["confidence"]
+        top2_conf = top2["confidence"] if top2 else 0.0
+        margin = top1_conf - top2_conf
+
+        if selected_crop and top1["crop"].lower() != selected_crop.lower():
+            diagnosis_reliable = False
+            uncertainty_reason = f"Predicted crop ({top1['crop']}) does not match user-selected crop ({selected_crop})."
+        elif top1_conf < MIN_CONFIDENCE_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"Prediction confidence ({top1_conf:.1f}%) is below minimum threshold ({MIN_CONFIDENCE_THRESHOLD}%)."
+        elif margin < MIN_MARGIN_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"High prediction ambiguity (confidence margin between top predictions is only {margin:.1f}%)."
+
+        status = "success" if diagnosis_reliable else "uncertain"
+
+        top_predictions_formatted = [
+            {
+                "class_name": p["class_name"],
+                "crop": p["crop"],
+                "condition": p["condition"],
+                "confidence": p["confidence"]
+            }
+            for p in top3
+        ]
+
+        explanation = None
+        if diagnosis_reliable:
+            explanation = generate_gradcam(
+                model=model,
+                img_array=img_array,
+                target_class_idx=top1["index"],
+                original_pil_image=pil_img
+            )
+
+        return jsonify({
+            "status": status,
+            "selected_crop": selected_crop,
+            "prediction": {
+                "class_name": top1["class_name"],
+                "crop": top1["crop"],
+                "condition": top1["condition"],
+                "confidence": top1["confidence"]
+            },
+            "top_predictions": top_predictions_formatted,
+            "diagnosis_reliable": diagnosis_reliable,
+            "uncertainty_reason": uncertainty_reason,
+            "is_healthy": top1["is_healthy"],
+            "explanation": explanation
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Grad-CAM explanation error: {str(e)}"}), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

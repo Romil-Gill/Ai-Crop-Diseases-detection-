@@ -6,12 +6,13 @@ import { ImageUploader } from './components/ImageUploader';
 import { ScanPreview } from './components/ScanPreview';
 import { AnalysisLoader } from './components/AnalysisLoader';
 import { DiagnosisCard } from './components/DiagnosisCard';
+import { GradCamVisualizer } from './components/GradCamVisualizer';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
 import { ErrorState } from './components/ErrorState';
 
 import type { SupportedCrop, PredictResponse } from './types/api';
-import { checkHealth, predictDisease } from './services/api';
+import { checkHealth, explainDisease } from './services/api';
 import { Sparkles, ArrowRight, RefreshCcw } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -71,7 +72,7 @@ export const App: React.FC = () => {
     scannerRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Handle AI Analysis Call to Flask Backend
+  // Handle AI Analysis & Grad-CAM Explanation Call to Flask Backend
   const handleAnalyze = async () => {
     if (!selectedFile || !selectedCrop) return;
 
@@ -80,7 +81,7 @@ export const App: React.FC = () => {
     setAnalysisResult(null);
 
     try {
-      const response = await predictDisease(selectedFile, selectedCrop);
+      const response = await explainDisease(selectedFile, selectedCrop);
       setAnalysisResult(response);
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -206,6 +207,14 @@ export const App: React.FC = () => {
             <div className="space-y-6">
               <DiagnosisCard result={analysisResult} />
               
+              {/* Grad-CAM Explainable AI Overlay (Only for reliable diagnoses) */}
+              {analysisResult.explanation && imagePreviewUrl && (
+                <GradCamVisualizer
+                  explanation={analysisResult.explanation}
+                  originalImageUrl={imagePreviewUrl}
+                />
+              )}
+
               <TopPredictions predictions={analysisResult.top_predictions} />
 
               {/* Action Button to Scan Another Leaf */}

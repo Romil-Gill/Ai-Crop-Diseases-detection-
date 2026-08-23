@@ -70,4 +70,33 @@ export const predictDisease = async (
   }
 };
 
+export const explainDisease = async (
+  imageFile: File,
+  selectedCrop?: SupportedCrop | string
+): Promise<PredictResponse> => {
+  const formData = new FormData();
+  formData.append('file', imageFile);
+  if (selectedCrop) {
+    formData.append('selected_crop', selectedCrop);
+  }
+
+  try {
+    const response = await apiClient.post<PredictResponse>('/api/explain', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (!error.response) {
+        throw new Error('Flask ML backend server is currently offline or unreachable at ' + API_BASE_URL);
+      }
+      const serverErr = error.response.data?.error || `Server error (${error.response.status})`;
+      throw new Error(serverErr);
+    }
+    throw new Error('Network timeout or connection error during Grad-CAM explanation generation.');
+  }
+};
+
 export { API_BASE_URL };

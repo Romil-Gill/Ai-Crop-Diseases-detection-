@@ -141,5 +141,72 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertIn('does not match', res_json['uncertainty_reason'])
         print(f"[TEST 7 PASSED] Safe Diagnosis Gate caught crop mismatch! Selected: {mismatched_crop}, Predicted: {predicted_crop}. Status: {res_json['status']}, Reliable: {res_json['diagnosis_reliable']}")
 
+    def test_08_explain_valid_image(self):
+        """Test POST /api/explain with valid image returns Grad-CAM explanation when reliable"""
+        # First get prediction crop
+        res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')
+        predicted_crop = res_raw.get_json()['prediction']['crop']
+
+        data = {
+            'file': (self.create_dummy_image(), 'leaf.jpg'),
+            'selected_crop': predicted_crop
+        }
+        response = self.client.post('/api/explain', data=data, content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        res_json = response.get_json()
+
+        self.assertEqual(res_json['status'], 'success')
+        self.assertTrue(res_json['diagnosis_reliable'])
+        self.assertIsNotNone(res_json['explanation'])
+        
+        exp = res_json['explanation']
+        self.assertIn('heatmap', exp)
+        self.assertIn('overlay', exp)
+        self.assertTrue(exp['heatmap'].startswith('data:image/png;base64,'))
+        self.assertTrue(exp['overlay'].startswith('data:image/png;base64,'))
+        self.assertEqual(exp['method'], 'Grad-CAM')
+        self.assertEqual(exp['target_layer'], 'mobilenetv2_1.00_224/out_relu')
+        print(f"[TEST 8 PASSED] /api/explain returned valid Grad-CAM overlay for target layer '{exp['target_layer']}'.")
+
+    def test_09_explain_missing_and_invalid_file(self):
+        """Test POST /api/explain handling of missing or non-image files"""
+        res1 = self.client.post('/api/explain', data={}, content_type='multipart/form-data')
+        self.assertEqual(res1.status_code, 400)
+
+        data_txt = {'file': (io.BytesIO(b"not an image"), 'test.txt')}
+        res2 = self.client.post('/api/explain', data=data_txt, content_type='multipart/form-data')
+        self.assertEqual(res2.status_code, 400)
+        print("[TEST 9 PASSED] /api/explain correctly rejects missing and non-image files with HTTP 400.")
+
+    def test_10_explain_unsupported_crop(self):
+        """Test POST /api/explain with unsupported selected_crop"""
+        data = {
+            'file': (self.create_dummy_image(), 'leaf.jpg'),
+            'selected_crop': 'Wheat'
+        }
+        response = self.client.post('/api/explain', data=data, content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Unsupported selected_crop', response.get_json()['error'])
+        print("[TEST 10 PASSED] /api/explain unsupported selected_crop 'Wheat' rejected with HTTP 400.")
+
+    def test_11_explain_crop_mismatch_no_explanation(self):
+        """Test POST /api/explain with crop mismatch returns uncertain status and explanation=None"""
+        res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')
+        predicted_crop = res_raw.get_json()['prediction']['crop']
+        mismatched_crop = "Rice" if predicted_crop != "Rice" else "Tomato"
+
+        data = {
+            'file': (self.create_dummy_image(), 'leaf.jpg'),
+            'selected_crop': mismatched_crop
+        }
+        response = self.client.post('/api/explain', data=data, content_type='multipart/form-data')
+        self.assertEqual(response.status_code, 200)
+        res_json = response.get_json()
+
+        self.assertEqual(res_json['status'], 'uncertain')
+        self.assertFalse(res_json['diagnosis_reliable'])
+        self.assertIsNone(res_json['explanation'])
+        print(f"[TEST 11 PASSED] /api/explain crop mismatch returns uncertain status without confirmed explanation.")
+
 if __name__ == '__main__':
     unittest.main()

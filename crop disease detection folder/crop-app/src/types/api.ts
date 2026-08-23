@@ -26,14 +26,22 @@ export interface PredictionItem {
   confidence: number;
 }
 
+export interface GradCamExplanation {
+  heatmap: string;
+  overlay: string;
+  method: string;
+  target_layer: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
-  selected_crop: string | null;
+  selected_crop?: string | null;
   prediction: PredictionItem;
   top_predictions: PredictionItem[];
   diagnosis_reliable: boolean;
-  uncertainty_reason: string | null;
+  uncertainty_reason?: string | null;
   is_healthy: boolean;
+  explanation?: GradCamExplanation | null;
 }
 
 export interface ApiError {
