@@ -110,10 +110,6 @@ export const GradCamVisualizer: React.FC<GradCamVisualizerProps> = ({
                 className="absolute inset-0 w-full h-full object-cover transition-opacity duration-150 ease-out"
                 style={{ opacity: opacity }}
               />
-              {/* Layer watermark tag */}
-              <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-sm text-[10px] font-mono text-emerald-300 border border-white/10">
-                Layer: {explanation.target_layer.split('/').pop()}
-              </div>
             </div>
 
             {/* Opacity Control Slider */}
