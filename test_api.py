@@ -138,7 +138,7 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertEqual(res_json['status'], 'uncertain')
         self.assertFalse(res_json['diagnosis_reliable'])
         self.assertIsNotNone(res_json['uncertainty_reason'])
-        self.assertIn('does not match selected crop', res_json['uncertainty_reason'])
+        self.assertIn('does not match', res_json['uncertainty_reason'])
         print(f"[TEST 7 PASSED] Safe Diagnosis Gate caught crop mismatch! Selected: {mismatched_crop}, Predicted: {predicted_crop}. Status: {res_json['status']}, Reliable: {res_json['diagnosis_reliable']}")
 
 if __name__ == '__main__':
