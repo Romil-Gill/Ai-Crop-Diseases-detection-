@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SupportedCrop } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -113,6 +113,40 @@ export const getAdvisory = async (className: string): Promise<AdvisoryResponse> 
       throw new Error(error.response.data?.error || 'Failed to fetch agricultural advisory.');
     }
     throw new Error('Network error while retrieving advisory information.');
+  }
+};
+
+export const getSymptomQuestions = async (className: string): Promise<SymptomQuestionsResponse> => {
+  try {
+    const response = await apiClient.get<SymptomQuestionsResponse>('/api/symptom-questions', {
+      params: { class_name: className },
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch symptom verification questions.');
+    }
+    throw new Error('Network error while retrieving symptom questions.');
+  }
+};
+
+export const verifySymptoms = async (
+  className: string,
+  answers: Record<string, string>,
+  fieldSpread: string
+): Promise<SymptomVerifyResponse> => {
+  try {
+    const response = await apiClient.post<SymptomVerifyResponse>('/api/verify-symptoms', {
+      class_name: className,
+      answers,
+      field_spread: fieldSpread,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || 'Failed to submit symptom verification.');
+    }
+    throw new Error('Network error during symptom verification submission.');
   }
 };
 

@@ -61,6 +61,46 @@ export interface AdvisoryResponse {
   sources: AdvisorySource[];
 }
 
+export interface SymptomQuestion {
+  id: string;
+  question: string;
+  weight: number;
+}
+
+export interface FieldSpreadOption {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface SymptomQuestionsResponse {
+  status: string;
+  class_name: string;
+  questions: SymptomQuestion[];
+  field_spread_options: FieldSpreadOption[];
+}
+
+export interface SymptomVerificationResult {
+  answered: number;
+  agreement: 'high' | 'moderate' | 'low';
+  agreement_label: string;
+  match_score: number;
+}
+
+export interface FieldAssessmentResult {
+  concern_level: 'LOW' | 'MODERATE' | 'HIGH';
+  reason: string;
+  field_spread: string;
+}
+
+export interface SymptomVerifyResponse {
+  status: string;
+  class_name: string;
+  symptom_verification: SymptomVerificationResult;
+  field_assessment: FieldAssessmentResult;
+  disclaimer: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;

@@ -280,5 +280,118 @@ class TestFasalRakshakAPI(unittest.TestCase):
                 self.assertNotIn(key, combined_text, f"Forbidden term '{key}' found in advisory text for '{c_name}'")
         print("[TEST 15 PASSED] Safety Gate verified: Zero chemical/dosage/spray_interval fields present.")
 
+    def test_16_symptom_questions_endpoint(self):
+        """Test GET /api/symptom-questions endpoint"""
+        res1 = self.client.get('/api/symptom-questions?class_name=Rice-Bacterialblight')
+        self.assertEqual(res1.status_code, 200)
+        j1 = res1.get_json()
+        self.assertEqual(j1['status'], 'success')
+        self.assertTrue(len(j1['questions']) >= 2)
+        self.assertTrue(len(j1['field_spread_options']) >= 4)
+
+        res2 = self.client.get('/api/symptom-questions?class_name=InvalidClass')
+        self.assertEqual(res2.status_code, 400)
+        print("[TEST 16 PASSED] GET /api/symptom-questions returned structured questions & options.")
+
+    def test_17_verify_symptoms_high_agreement(self):
+        """Test POST /api/verify-symptoms with high symptom agreement"""
+        payload = {
+            "class_name": "Rice-Bacterialblight",
+            "answers": {
+                "wavy_margin_lesions": "yes",
+                "bacterial_droplets": "yes",
+                "leaf_drying": "yes"
+            },
+            "field_spread": "several_leaves"
+        }
+        res = self.client.post('/api/verify-symptoms', json=payload)
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['status'], 'success')
+        self.assertEqual(j['symptom_verification']['agreement'], 'high')
+        self.assertEqual(j['symptom_verification']['match_score'], 1.0)
+        self.assertEqual(j['field_assessment']['concern_level'], 'HIGH')
+        print("[TEST 17 PASSED] POST /api/verify-symptoms correctly computed high agreement and field concern.")
+
+    def test_18_verify_symptoms_low_agreement(self):
+        """Test POST /api/verify-symptoms with low symptom agreement (disagreement trigger)"""
+        payload = {
+            "class_name": "Rice-Bacterialblight",
+            "answers": {
+                "wavy_margin_lesions": "no",
+                "bacterial_droplets": "no",
+                "leaf_drying": "no"
+            },
+            "field_spread": "only_this_leaf"
+        }
+        res = self.client.post('/api/verify-symptoms', json=payload)
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['symptom_verification']['agreement'], 'low')
+        self.assertEqual(j['symptom_verification']['match_score'], 0.0)
+        self.assertEqual(j['field_assessment']['concern_level'], 'LOW')
+        print("[TEST 18 PASSED] POST /api/verify-symptoms correctly computed low agreement.")
+
+    def test_19_verify_symptoms_high_field_concern(self):
+        """Test POST /api/verify-symptoms with widespread field spread triggering HIGH concern"""
+        payload = {
+            "class_name": "Tomato___Late_blight",
+            "answers": {
+                "large_water_soaked_blotches": "yes"
+            },
+            "field_spread": "widespread"
+        }
+        res = self.client.post('/api/verify-symptoms', json=payload)
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['field_assessment']['concern_level'], 'HIGH')
+        print("[TEST 19 PASSED] Widespread field spread correctly triggered HIGH concern level.")
+
+    def test_20_verify_symptoms_unsure_spread_no_inflation(self):
+        """Test that 'unsure' field spread does NOT artificially inflate concern level"""
+        payload = {
+            "class_name": "Tomato___Early_blight",
+            "answers": {
+                "target_board_rings": "no"
+            },
+            "field_spread": "unsure"
+        }
+        res = self.client.post('/api/verify-symptoms', json=payload)
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['field_assessment']['concern_level'], 'LOW')
+        print("[TEST 20 PASSED] 'Unsure' field spread did not artificially inflate concern level.")
+
+    def test_21_verify_symptoms_invalid_input_validation(self):
+        """Test POST /api/verify-symptoms input validation and HTTP 400 errors"""
+        res1 = self.client.post('/api/verify-symptoms', json={"class_name": "Unknown"})
+        self.assertEqual(res1.status_code, 400)
+
+        res2 = self.client.post('/api/verify-symptoms', json={"class_name": "Rice-Bacterialblight", "answers": {"q1": "invalid_val"}})
+        self.assertEqual(res2.status_code, 400)
+
+        res3 = self.client.post('/api/verify-symptoms', json={"class_name": "Rice-Bacterialblight", "field_spread": "invalid_spread"})
+        self.assertEqual(res3.status_code, 400)
+        print("[TEST 21 PASSED] POST /api/verify-symptoms input validation correctly enforced.")
+
+    def test_22_verify_symptoms_healthy_class_handling(self):
+        """Test symptom verification endpoint handling for healthy classes"""
+        res = self.client.get('/api/symptom-questions?class_name=Tomato___healthy')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertEqual(j['questions'], [])
+        print("[TEST 22 PASSED] Healthy class symptom question request handled gracefully.")
+
+    def test_23_cnn_confidence_isolation_test(self):
+        """Safety Test: Verify CNN model confidence is NEVER used as an input to concern scoring"""
+        from symptom_data import evaluate_symptom_verification
+        import inspect
+
+        sig = inspect.signature(evaluate_symptom_verification)
+        params = list(sig.parameters.keys())
+        self.assertNotIn('confidence', params, "evaluate_symptom_verification must NOT accept 'confidence' parameter")
+        self.assertNotIn('cnn_confidence', params, "evaluate_symptom_verification must NOT accept 'cnn_confidence' parameter")
+        print("[TEST 23 PASSED] CNN confidence isolation strictly verified in concern scoring logic.")
+
 if __name__ == '__main__':
     unittest.main()

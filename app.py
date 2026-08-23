@@ -171,6 +171,7 @@ def predict_api():
 # --- NEW REST API ENDPOINTS (FasalRakshak AI Phase 1A/1B) ---
 
 from advisory_data import ADVISORY_DATABASE
+from symptom_data import SYMPTOM_QUESTIONS, FIELD_SPREAD_OPTIONS, evaluate_symptom_verification
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
@@ -180,6 +181,67 @@ def api_health():
         "supported_crops": SUPPORTED_CROPS,
         "total_classes": len(class_names)
     }), 200
+
+@app.route('/api/symptom-questions', methods=['GET'])
+def api_symptom_questions():
+    c_name = request.args.get('class_name')
+    if not c_name:
+        return jsonify({"error": "Missing required query parameter 'class_name'"}), 400
+    
+    c_name = c_name.strip()
+    if c_name not in class_names:
+        return jsonify({
+            "error": f"Unsupported or invalid class_name '{c_name}'. Must be one of the 27 model classes."
+        }), 400
+
+    questions = SYMPTOM_QUESTIONS.get(c_name, [])
+    options_list = [
+        {"id": k, "label": v["label"], "description": v["description"]}
+        for k, v in FIELD_SPREAD_OPTIONS.items()
+    ]
+
+    return jsonify({
+        "status": "success",
+        "class_name": c_name,
+        "questions": questions,
+        "field_spread_options": options_list
+    }), 200
+
+@app.route('/api/verify-symptoms', methods=['POST'])
+def api_verify_symptoms():
+    data = request.get_json(silent=True)
+    if not data or not isinstance(data, dict):
+        return jsonify({"error": "Invalid or missing JSON payload"}), 400
+
+    c_name = data.get('class_name')
+    answers = data.get('answers')
+    field_spread = data.get('field_spread')
+
+    if not c_name or c_name not in class_names:
+        return jsonify({
+            "error": f"Unsupported or invalid class_name '{c_name}'."
+        }), 400
+
+    if answers is not None and not isinstance(answers, dict):
+        return jsonify({"error": "'answers' must be a dictionary object"}), 400
+
+    if answers:
+        for q_id, val in answers.items():
+            if str(val).lower() not in ("yes", "no", "unsure"):
+                return jsonify({
+                    "error": f"Invalid answer value '{val}' for question '{q_id}'. Allowed: 'yes', 'no', 'unsure'."
+                }), 400
+
+    if field_spread and str(field_spread).lower() not in FIELD_SPREAD_OPTIONS:
+        return jsonify({
+            "error": f"Invalid field_spread value '{field_spread}'. Allowed: {list(FIELD_SPREAD_OPTIONS.keys())}"
+        }), 400
+
+    res = evaluate_symptom_verification(c_name, answers or {}, field_spread or "unsure")
+    res["status"] = "success"
+    res["class_name"] = c_name
+
+    return jsonify(res), 200
 
 @app.route('/api/advisory', methods=['GET'])
 def api_advisory():

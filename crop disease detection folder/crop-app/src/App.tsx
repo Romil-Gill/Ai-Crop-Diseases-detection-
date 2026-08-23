@@ -7,6 +7,7 @@ import { ScanPreview } from './components/ScanPreview';
 import { AnalysisLoader } from './components/AnalysisLoader';
 import { DiagnosisCard } from './components/DiagnosisCard';
 import { GradCamVisualizer } from './components/GradCamVisualizer';
+import { SymptomVerification } from './components/SymptomVerification';
 import { AdvisoryPanel } from './components/AdvisoryPanel';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
@@ -217,7 +218,17 @@ export const App: React.FC = () => {
                 />
               )}
 
-              {/* 3. Farmer Action Advisory Plan */}
+              {/* 3. Symptom Verification & Field Triage */}
+              <SymptomVerification
+                className={analysisResult.prediction.class_name}
+                confidence={analysisResult.prediction.confidence}
+                isHealthy={analysisResult.is_healthy}
+                crop={analysisResult.prediction.crop}
+                condition={analysisResult.prediction.condition}
+                onScanAnotherLeaf={handleResetUpload}
+              />
+
+              {/* 4. Farmer Action Advisory Plan */}
               {analysisResult.advisory ? (
                 <AdvisoryPanel
                   advisory={analysisResult.advisory}
