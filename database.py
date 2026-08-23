@@ -1,12 +1,13 @@
 """
-FasalRakshak AI - SQLite Persistence Layer
+FasalRakshak AI - SQLite Persistence Layer (Hardened Phase 6.1)
 Handles local scan history persistence and anonymized community disease signals.
-Privacy Enforcement: Raw GPS coordinates are coarsened to 2 decimal places max; images are never transmitted.
+Privacy Enforcement: Public API coordinates are coarsened to 1 decimal place max (map_lat, map_lon).
+Images, base64 payloads, and exact GPS coordinates are NEVER stored or transmitted.
 """
 
 import sqlite3
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime, timedelta
 
 DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fasalrakshak.db")
@@ -20,7 +21,7 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
 
 
 def init_db(db_path: Optional[str] = None):
-    """Initializes SQLite tables automatically if they do not exist."""
+    """Initializes and migrates SQLite tables safely if they do not exist."""
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
@@ -34,6 +35,7 @@ def init_db(db_path: Optional[str] = None):
         condition TEXT NOT NULL,
         model_confidence REAL NOT NULL,
         is_healthy INTEGER NOT NULL,
+        diagnosis_reliable INTEGER NOT NULL DEFAULT 1,
         symptom_agreement TEXT,
         symptom_match_score REAL,
         field_concern TEXT,
@@ -43,12 +45,18 @@ def init_db(db_path: Optional[str] = None):
     );
     """)
 
+    # Safe Schema Migration Check for diagnosis_reliable column
+    cursor.execute("PRAGMA table_info(scans)")
+    columns = [col["name"] for col in cursor.fetchall()]
+    if "diagnosis_reliable" not in columns:
+        cursor.execute("ALTER TABLE scans ADD COLUMN diagnosis_reliable INTEGER NOT NULL DEFAULT 1")
+
     # 2. Community Signals Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS community_signals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         created_at TEXT NOT NULL,
-        source_scan_id INTEGER NOT NULL,
+        source_scan_id INTEGER UNIQUE,
         crop TEXT NOT NULL,
         class_name TEXT NOT NULL,
         condition TEXT NOT NULL,
@@ -59,7 +67,7 @@ def init_db(db_path: Optional[str] = None):
         field_concern TEXT,
         weather_favorability TEXT,
         status TEXT DEFAULT 'reported_signal',
-        FOREIGN KEY (source_scan_id) REFERENCES scans (id) ON DELETE CASCADE
+        FOREIGN KEY (source_scan_id) REFERENCES scans (id) ON DELETE SET NULL
     );
     """)
 
@@ -68,7 +76,12 @@ def init_db(db_path: Optional[str] = None):
 
 
 def create_scan(data: Dict[str, Any], db_path: Optional[str] = None) -> Dict[str, Any]:
-    """Inserts a new reliable assessment scan record."""
+    """Inserts a new scan record. Server-side enforces diagnosis_reliable check."""
+    is_reliable = 1 if data.get("diagnosis_reliable", True) else 0
+
+    if not is_reliable:
+        raise ValueError("Uncertain diagnoses are caught by the Safe Diagnosis Gate and cannot be saved to history.")
+
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
@@ -77,9 +90,9 @@ def create_scan(data: Dict[str, Any], db_path: Optional[str] = None) -> Dict[str
     cursor.execute("""
     INSERT INTO scans (
         created_at, crop, class_name, condition, model_confidence, is_healthy,
-        symptom_agreement, symptom_match_score, field_concern, weather_favorability,
-        location_name, community_shared
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        diagnosis_reliable, symptom_agreement, symptom_match_score, field_concern,
+        weather_favorability, location_name, community_shared
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
     """, (
         created_at,
         data.get("crop"),
@@ -87,6 +100,7 @@ def create_scan(data: Dict[str, Any], db_path: Optional[str] = None) -> Dict[str
         data.get("condition"),
         float(data.get("model_confidence", 0.0)),
         1 if data.get("is_healthy") else 0,
+        is_reliable,
         data.get("symptom_agreement"),
         float(data["symptom_match_score"]) if data.get("symptom_match_score") is not None else None,
         data.get("field_concern"),
@@ -98,7 +112,7 @@ def create_scan(data: Dict[str, Any], db_path: Optional[str] = None) -> Dict[str
     conn.commit()
     conn.close()
 
-    return get_scan_by_id(scan_id, db_path)
+    return get_scan_by_id(scan_id, db_path) # type: ignore
 
 
 def get_scans(crop_filter: Optional[str] = None, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -130,27 +144,42 @@ def get_scan_by_id(scan_id: int, db_path: Optional[str] = None) -> Optional[Dict
 
 
 def delete_scan(scan_id: int, db_path: Optional[str] = None) -> bool:
-    """Deletes a scan record by ID."""
+    """
+    Deletes a scan record by ID.
+    Delete Integrity: Sets source_scan_id to NULL in community_signals so anonymized summary data
+    remains clean without orphan crashes or foreign key corruption.
+    """
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
+    # Disassociate community signal source_scan_id safely before deletion
+    cursor.execute("UPDATE community_signals SET source_scan_id = NULL WHERE source_scan_id = ?", (scan_id,))
+
+    # Delete scan
     cursor.execute("DELETE FROM scans WHERE id = ?", (scan_id,))
     deleted = cursor.rowcount > 0
+
     conn.commit()
     conn.close()
 
     return deleted
 
 
-def create_community_signal(scan_id: int, approx_lat: Optional[float] = None, approx_lon: Optional[float] = None, db_path: Optional[str] = None) -> Dict[str, Any]:
+def create_community_signal(scan_id: int, approx_lat: Optional[float] = None, approx_lon: Optional[float] = None, db_path: Optional[str] = None) -> Tuple[Dict[str, Any], bool]:
     """
-    Opt-in sharing: Creates an anonymized community disease signal from a reliable disease scan.
-    Coarsens latitude and longitude to 2 decimal places for privacy protection.
+    Server-Side Eligibility Verification & Opt-in Sharing:
+    - Source scan must exist
+    - Must be a reliable diagnosis (diagnosis_reliable == 1)
+    - Must be a disease condition (is_healthy == 0)
+    - Duplicate protection: Returns (existing_signal, True) if already shared without creating duplicate row.
     """
     scan = get_scan_by_id(scan_id, db_path)
 
     if not scan:
         raise ValueError("Source scan record not found.")
+
+    if not scan.get("diagnosis_reliable"):
+        raise ValueError("Uncertain diagnoses are caught by the Safe Diagnosis Gate and cannot be submitted as community signals.")
 
     if scan.get("is_healthy"):
         raise ValueError("Healthy crop assessments cannot be submitted as disease signals.")
@@ -158,55 +187,61 @@ def create_community_signal(scan_id: int, approx_lat: Optional[float] = None, ap
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
-    # Check if already shared
+    # Duplicate Protection Check: Lookup by source_scan_id
     cursor.execute("SELECT * FROM community_signals WHERE source_scan_id = ?", (scan_id,))
     existing = cursor.fetchone()
     if existing:
         conn.close()
-        return _row_to_signal_dict(existing)
+        return _row_to_signal_dict(existing), True # Already shared
 
-    # Privacy Coarsening: Round lat/lon to 2 decimal places max
-    c_lat = round(float(approx_lat), 2) if approx_lat is not None else 30.38
-    c_lon = round(float(approx_lon), 2) if approx_lon is not None else 76.78
+    # Coordinate Coarsening for Storage (1 decimal place)
+    c_lat = round(float(approx_lat), 1) if approx_lat is not None else 30.4
+    c_lon = round(float(approx_lon), 1) if approx_lon is not None else 76.8
 
     created_at = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     area_name = scan.get("location_name") or "Local District"
 
-    cursor.execute("""
-    INSERT INTO community_signals (
-        created_at, source_scan_id, crop, class_name, condition, area_name,
-        approx_lat, approx_lon, symptom_agreement, field_concern, weather_favorability, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reported_signal')
-    """, (
-        created_at,
-        scan_id,
-        scan["crop"],
-        scan["class_name"],
-        scan["condition"],
-        area_name,
-        c_lat,
-        c_lon,
-        scan.get("symptom_agreement"),
-        scan.get("field_concern"),
-        scan.get("weather_favorability")
-    ))
+    try:
+        cursor.execute("""
+        INSERT INTO community_signals (
+            created_at, source_scan_id, crop, class_name, condition, area_name,
+            approx_lat, approx_lon, symptom_agreement, field_concern, weather_favorability, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'reported_signal')
+        """, (
+            created_at,
+            scan_id,
+            scan["crop"],
+            scan["class_name"],
+            scan["condition"],
+            area_name,
+            c_lat,
+            c_lon,
+            scan.get("symptom_agreement"),
+            scan.get("field_concern"),
+            scan.get("weather_favorability")
+        ))
 
-    signal_id = cursor.lastrowid
+        signal_id = cursor.lastrowid
 
-    # Update scan record community_shared flag
-    cursor.execute("UPDATE scans SET community_shared = 1 WHERE id = ?", (scan_id,))
+        # Update scan record community_shared flag
+        cursor.execute("UPDATE scans SET community_shared = 1 WHERE id = ?", (scan_id,))
+        conn.commit()
 
-    conn.commit()
+        cursor.execute("SELECT * FROM community_signals WHERE id = ?", (signal_id,))
+        row = cursor.fetchone()
+        conn.close()
 
-    cursor.execute("SELECT * FROM community_signals WHERE id = ?", (signal_id,))
-    row = cursor.fetchone()
-    conn.close()
-
-    return _row_to_signal_dict(row)
+        return _row_to_signal_dict(row), False # Newly created
+    except sqlite3.IntegrityError:
+        # Fallback if race condition triggers UNIQUE constraint
+        cursor.execute("SELECT * FROM community_signals WHERE source_scan_id = ?", (scan_id,))
+        row = cursor.fetchone()
+        conn.close()
+        return _row_to_signal_dict(row), True
 
 
 def get_community_signals(limit: int = 50, db_path: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Retrieves sanitized community disease signals. Never returns precise GPS or raw image paths."""
+    """Retrieves public community disease signals. Public APIs use map_lat and map_lon (1 decimal coarsening)."""
     conn = get_db_connection(db_path)
     cursor = conn.cursor()
 
@@ -267,6 +302,7 @@ def get_community_summary(db_path: Optional[str] = None) -> Dict[str, Any]:
 
 
 def _row_to_scan_dict(row: sqlite3.Row) -> Dict[str, Any]:
+    keys = row.keys()
     return {
         "id": row["id"],
         "created_at": row["created_at"],
@@ -275,6 +311,7 @@ def _row_to_scan_dict(row: sqlite3.Row) -> Dict[str, Any]:
         "condition": row["condition"],
         "model_confidence": row["model_confidence"],
         "is_healthy": bool(row["is_healthy"]),
+        "diagnosis_reliable": bool(row["diagnosis_reliable"]) if "diagnosis_reliable" in keys else True,
         "symptom_agreement": row["symptom_agreement"],
         "symptom_match_score": row["symptom_match_score"],
         "field_concern": row["field_concern"],
@@ -285,16 +322,26 @@ def _row_to_scan_dict(row: sqlite3.Row) -> Dict[str, Any]:
 
 
 def _row_to_signal_dict(row: sqlite3.Row) -> Dict[str, Any]:
+    """
+    Converts SQLite row to sanitized public signal dict.
+    Hardened Privacy: Coarsens map coordinates to 1 decimal place max (map_lat, map_lon).
+    Contains ZERO image fields, ZERO raw lat/lon, ZERO personal identifiers.
+    """
+    raw_lat = row["approx_lat"]
+    raw_lon = row["approx_lon"]
+
+    map_lat = round(float(raw_lat), 1) if raw_lat is not None else 30.4
+    map_lon = round(float(raw_lon), 1) if raw_lon is not None else 76.8
+
     return {
         "id": row["id"],
         "created_at": row["created_at"],
-        "source_scan_id": row["source_scan_id"],
         "crop": row["crop"],
         "class_name": row["class_name"],
         "condition": row["condition"],
         "area_name": row["area_name"],
-        "approx_lat": row["approx_lat"],
-        "approx_lon": row["approx_lon"],
+        "map_lat": map_lat,
+        "map_lon": map_lon,
         "symptom_agreement": row["symptom_agreement"],
         "field_concern": row["field_concern"],
         "weather_favorability": row["weather_favorability"],

@@ -102,7 +102,7 @@ export const CommunityPage: React.FC = () => {
                       <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] text-slate-500 font-sans">
                         <div className="flex items-center gap-1">
                           <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>Sanitized Area Coarsening ({sig.approx_lat?.toFixed(2)}°N, {sig.approx_lon?.toFixed(2)}°E)</span>
+                          <span>Sanitized Area Coarsening ({sig.map_lat?.toFixed(1)}°N, {sig.map_lon?.toFixed(1)}°E)</span>
                         </div>
                         <span className="font-mono text-[10px] uppercase font-bold text-slate-400">
                           {sig.status}

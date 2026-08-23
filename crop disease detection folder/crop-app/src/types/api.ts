@@ -196,13 +196,13 @@ export interface ScansListResponse {
 export interface CommunitySignalRecord {
   id: number;
   created_at: string;
-  source_scan_id: number;
+  source_scan_id?: number | null;
   crop: string;
   class_name: string;
   condition: string;
   area_name: string;
-  approx_lat?: number;
-  approx_lon?: number;
+  map_lat?: number;
+  map_lon?: number;
   symptom_agreement?: string | null;
   field_concern?: string | null;
   weather_favorability?: string | null;

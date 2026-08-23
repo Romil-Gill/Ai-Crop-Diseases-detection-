@@ -252,6 +252,9 @@ def api_save_scan():
     if not c_name or c_name not in class_names:
         return jsonify({"error": f"Invalid or unsupported class_name '{c_name}'."}), 400
 
+    if data.get('diagnosis_reliable') is False or data.get('diagnosis_reliable') == 0:
+        return jsonify({"error": "Uncertain diagnoses are caught by the Safe Diagnosis Gate and cannot be saved to history."}), 400
+
     try:
         scan_record = database.create_scan(data)
         return jsonify({
@@ -259,6 +262,8 @@ def api_save_scan():
             "message": "Assessment record saved successfully.",
             "scan": scan_record
         }), 201
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({
             "status": "error",
@@ -312,14 +317,24 @@ def api_create_community_signal():
     approx_lon = data.get('approx_lon')
 
     try:
-        signal = database.create_community_signal(int(scan_id), approx_lat=approx_lat, approx_lon=approx_lon)
+        signal, already_shared = database.create_community_signal(int(scan_id), approx_lat=approx_lat, approx_lon=approx_lon)
+        if already_shared:
+            return jsonify({
+                "status": "already_shared",
+                "already_shared": True,
+                "message": "Signal has already been shared for this scan assessment.",
+                "signal": signal
+            }), 200
         return jsonify({
             "status": "success",
+            "already_shared": False,
             "message": "Anonymized community disease signal shared successfully.",
             "signal": signal
         }), 201
     except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400
+        err_msg = str(ve)
+        status_code = 404 if "not found" in err_msg.lower() else 400
+        return jsonify({"error": err_msg}), status_code
     except Exception as e:
         return jsonify({"error": f"Failed to share community signal ({str(e)})."}), 500
 

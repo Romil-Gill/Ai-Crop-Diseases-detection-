@@ -644,6 +644,7 @@ class TestFasalRakshakAPI(unittest.TestCase):
             "condition": "Brown Spot",
             "model_confidence": 97.0,
             "is_healthy": False,
+            "diagnosis_reliable": True,
             "location_name": "Ambala"
         }
         res_post = self.client.post('/api/scans', json=payload)
@@ -653,7 +654,7 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertEqual(res_share.status_code, 201)
         j = res_share.get_json()
         self.assertEqual(j['status'], 'success')
-        self.assertEqual(j['signal']['approx_lat'], 30.38)
+        self.assertEqual(j['signal']['map_lat'], 30.4)
         print("[TEST 39 PASSED] Opt-in community signal created with coarsened coordinates.")
 
     def test_40_share_community_signal_healthy_rejected(self):
@@ -663,7 +664,8 @@ class TestFasalRakshakAPI(unittest.TestCase):
             "class_name": "Sugarcane-Healthy",
             "condition": "Healthy",
             "model_confidence": 99.0,
-            "is_healthy": True
+            "is_healthy": True,
+            "diagnosis_reliable": True
         }
         res_post = self.client.post('/api/scans', json=payload)
         scan_id = res_post.get_json()['scan']['id']
@@ -683,11 +685,11 @@ class TestFasalRakshakAPI(unittest.TestCase):
             self.assertNotIn('image_path', sig)
             self.assertNotIn('image_url', sig)
             self.assertNotIn('raw_gps', sig)
-            if sig.get('approx_lat') is not None:
-                lat_str = str(sig['approx_lat'])
+            if sig.get('map_lat') is not None:
+                lat_str = str(sig['map_lat'])
                 if '.' in lat_str:
                     decimals = len(lat_str.split('.')[1])
-                    self.assertTrue(decimals <= 2, f"Excessive GPS precision '{lat_str}' in public signal!")
+                    self.assertTrue(decimals <= 1, f"Excessive GPS precision '{lat_str}' in public signal!")
         print("[TEST 41 PASSED] Privacy Safety Test: Community signals contain zero image paths or raw GPS.")
 
     def test_42_get_community_summary_aggregates(self):
@@ -700,6 +702,176 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertIn('signals_last_7_days', j)
         self.assertIn('area_breakdown', j)
         print("[TEST 42 PASSED] GET /api/community-summary returned correct aggregate statistics.")
+
+    def test_43_uncertain_assessment_cannot_be_saved(self):
+        """Phase 6.1 Test: Verify POST /api/scans with diagnosis_reliable == False is strictly rejected with HTTP 400"""
+        payload = {
+            "crop": "Rice",
+            "class_name": "Tomato___Bacterial_spot",
+            "condition": "Bacterial Spot",
+            "model_confidence": 45.0,
+            "is_healthy": False,
+            "diagnosis_reliable": False
+        }
+        res = self.client.post('/api/scans', json=payload)
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("uncertain", res.get_json()['error'].lower())
+        print("[TEST 43 PASSED] Server-side check strictly prevented saving uncertain assessment.")
+
+    def test_44_missing_source_scan_community_signal_rejected(self):
+        """Phase 6.1 Test: Verify POST /api/community-signals with nonexistent scan_id returns HTTP 404"""
+        res = self.client.post('/api/community-signals', json={"scan_id": 999999})
+        self.assertEqual(res.status_code, 404)
+        self.assertIn("not found", res.get_json()['error'].lower())
+        print("[TEST 44 PASSED] Sharing non-existent scan ID correctly returned HTTP 404.")
+
+    def test_45_duplicate_sharing_protection(self):
+        """Phase 6.1 Test: Verify sharing the same scan twice returns HTTP 200 with already_shared == True and creates 0 duplicate signals"""
+        payload = {
+            "crop": "Rice",
+            "class_name": "Rice-Leafsmut",
+            "condition": "Leaf Smut",
+            "model_confidence": 99.0,
+            "is_healthy": False,
+            "diagnosis_reliable": True,
+            "location_name": "Ambala"
+        }
+        res_scan = self.client.post('/api/scans', json=payload)
+        scan_id = res_scan.get_json()['scan']['id']
+
+        # First Share
+        res1 = self.client.post('/api/community-signals', json={"scan_id": scan_id, "approx_lat": 30.3782, "approx_lon": 76.7767})
+        self.assertEqual(res1.status_code, 201)
+        self.assertFalse(res1.get_json()['already_shared'])
+
+        # Second Share (Duplicate)
+        res2 = self.client.post('/api/community-signals', json={"scan_id": scan_id, "approx_lat": 30.3782, "approx_lon": 76.7767})
+        self.assertEqual(res2.status_code, 200)
+        self.assertTrue(res2.get_json()['already_shared'])
+        self.assertEqual(res2.get_json()['status'], 'already_shared')
+        print("[TEST 45 PASSED] Server-side duplicate sharing protection verified.")
+
+    def test_46_community_shared_state_updated_in_database(self):
+        """Phase 6.1 Test: Verify after successful sharing, scan.community_shared is set to True"""
+        payload = {
+            "crop": "Sugarcane",
+            "class_name": "Sugarcane-Red Rot",
+            "condition": "Red Rot",
+            "model_confidence": 96.0,
+            "is_healthy": False,
+            "diagnosis_reliable": True
+        }
+        res_scan = self.client.post('/api/scans', json=payload)
+        scan_id = res_scan.get_json()['scan']['id']
+
+        self.client.post('/api/community-signals', json={"scan_id": scan_id})
+
+        res_get = self.client.get(f'/api/scans/{scan_id}')
+        self.assertTrue(res_get.get_json()['scan']['community_shared'])
+        print("[TEST 46 PASSED] Scan record community_shared state correctly updated to True.")
+
+    def test_47_public_coordinates_coarsened_to_1_decimal(self):
+        """Phase 6.1 Test: Verify GET /api/community-signals returns map_lat and map_lon coarsened to 1 decimal place"""
+        payload = {
+            "crop": "Tomato",
+            "class_name": "Tomato___Late_blight",
+            "condition": "Late Blight",
+            "model_confidence": 98.0,
+            "is_healthy": False,
+            "diagnosis_reliable": True
+        }
+        res_scan = self.client.post('/api/scans', json=payload)
+        scan_id = res_scan.get_json()['scan']['id']
+
+        self.client.post('/api/community-signals', json={"scan_id": scan_id, "approx_lat": 30.37821, "approx_lon": 76.77673})
+
+        res_sigs = self.client.get('/api/community-signals')
+        self.assertEqual(res_sigs.status_code, 200)
+        signals = res_sigs.get_json()['signals']
+
+        matching = [s for s in signals if s.get('condition') == 'Late Blight']
+        self.assertTrue(len(matching) >= 1)
+        target = matching[0]
+        self.assertIn('map_lat', target)
+        self.assertIn('map_lon', target)
+        self.assertEqual(target['map_lat'], 30.4)
+        self.assertEqual(target['map_lon'], 76.8)
+        print("[TEST 47 PASSED] Public community API map coordinates coarsened to 1 decimal place.")
+
+    def test_48_recursive_privacy_safety_audit(self):
+        """Phase 6.1 Privacy Audit: Verify public community API responses contain ZERO private or raw GPS fields"""
+        res_sigs = self.client.get('/api/community-signals')
+        res_sum = self.client.get('/api/community-summary')
+
+        forbidden_keys = {
+            "image", "image_path", "uploaded_image", "original_filename",
+            "raw_lat", "raw_lon", "exact_lat", "exact_lon", "latitude", "longitude",
+            "personal_identifiers", "ip_address", "user_id"
+        }
+
+        def check_obj(obj, path="root"):
+            if isinstance(obj, dict):
+                for k, v in obj.items():
+                    self.assertNotIn(k.lower(), forbidden_keys, f"Forbidden privacy key '{k}' found at {path}!")
+                    check_obj(v, f"{path}.{k}")
+            elif isinstance(obj, list):
+                for idx, item in enumerate(obj):
+                    check_obj(item, f"{path}[{idx}]")
+
+        check_obj(res_sigs.get_json())
+        check_obj(res_sum.get_json())
+        print("[TEST 48 PASSED] Recursive Privacy Safety Audit: Zero private or raw GPS fields in public API.")
+
+    def test_49_scan_deletion_does_not_corrupt_summary(self):
+        """Phase 6.1 Integrity Test: Deleting a scan record sets source_scan_id = NULL and preserves community summary count"""
+        payload = {
+            "crop": "Pumpkin",
+            "class_name": "Pumpkin-Powdery_Mildew",
+            "condition": "Powdery Mildew",
+            "model_confidence": 92.0,
+            "is_healthy": False,
+            "diagnosis_reliable": True
+        }
+        res_scan = self.client.post('/api/scans', json=payload)
+        scan_id = res_scan.get_json()['scan']['id']
+
+        self.client.post('/api/community-signals', json={"scan_id": scan_id})
+
+        sum_before = self.client.get('/api/community-summary').get_json()['total_reported_signals']
+
+        # Delete local scan record
+        self.client.delete(f'/api/scans/{scan_id}')
+
+        sum_after = self.client.get('/api/community-summary').get_json()['total_reported_signals']
+
+        self.assertEqual(sum_before, sum_after, "Deleting local scan record must not corrupt community aggregate count.")
+        print("[TEST 49 PASSED] Local scan deletion preserved anonymized community summary without orphan crashes.")
+
+    def test_50_community_summary_aggregates_and_labeling(self):
+        """Phase 6.1 Test: Verify GET /api/community-summary uses non-alarmist labeling ("reported_signals")"""
+        res = self.client.get('/api/community-summary')
+        self.assertEqual(res.status_code, 200)
+        j = res.get_json()
+        self.assertIn("total_reported_signals", j)
+        self.assertNotIn("confirmed_cases", j)
+        self.assertNotIn("outbreak_count", j)
+        print("[TEST 50 PASSED] Community summary aggregates & non-alarmist labeling strictly verified.")
+
+    def test_51_isolated_test_database_init(self):
+        """Phase 6.1 Test: Verify database migration logic initializes cleanly on an isolated test DB path"""
+        import database
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
+            tmp_path = tmp.name
+
+        try:
+            database.init_db(tmp_path)
+            scans = database.get_scans(db_path=tmp_path)
+            self.assertEqual(scans, [])
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        print("[TEST 51 PASSED] Isolated database migration & initialization verified.")
 
 if __name__ == '__main__':
     unittest.main()
