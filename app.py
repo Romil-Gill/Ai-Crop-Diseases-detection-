@@ -17,6 +17,7 @@ MIN_CONFIDENCE_THRESHOLD = 50.0  # Percentage
 MIN_MARGIN_THRESHOLD = 10.0      # Top-1 vs Top-2 percentage margin
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024  # 4 MB max upload size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Load pre-trained model
@@ -167,6 +168,9 @@ def predict_api():
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        finally:
+            if os.path.exists(filepath):
+                os.remove(filepath)
 
 # --- NEW REST API ENDPOINTS (FasalRakshak AI Phase 1A/1B) ---
 
@@ -587,6 +591,9 @@ def api_predict():
 
     except Exception as e:
         return jsonify({"error": f"Model inference error: {str(e)}"}), 500
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 from gradcam import generate_gradcam
 
@@ -724,6 +731,9 @@ def api_explain():
 
     except Exception as e:
         return jsonify({"error": f"Grad-CAM explanation error: {str(e)}"}), 500
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 if __name__ == '__main__':
     use_reloader = os.environ.get("FLASK_RELOAD", "false").lower() == "true"
