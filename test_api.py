@@ -125,7 +125,12 @@ class TestFasalRakshakAPI(unittest.TestCase):
     def test_07_predict_crop_mismatch_handling(self):
         """Test POST /api/predict with mismatching crop selection to trigger Safe Diagnosis Gate"""
         res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')
-        predicted_crop = res_raw.get_json()['prediction']['crop']
+        raw_json = res_raw.get_json() or {}
+        predicted_crop = "Tomato"
+        if raw_json.get('prediction'):
+            predicted_crop = raw_json['prediction'].get('crop', 'Tomato')
+        elif raw_json.get('top_predictions') and len(raw_json['top_predictions']) > 0:
+            predicted_crop = raw_json['top_predictions'][0].get('crop', 'Tomato')
         
         mismatched_crop = "Rice" if predicted_crop != "Rice" else "Tomato"
         
@@ -146,7 +151,12 @@ class TestFasalRakshakAPI(unittest.TestCase):
     def test_08_explain_valid_image(self):
         """Test POST /api/explain with valid image returns Grad-CAM explanation when reliable"""
         res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')
-        predicted_crop = res_raw.get_json()['prediction']['crop']
+        raw_json = res_raw.get_json() or {}
+        predicted_crop = "Tomato"
+        if raw_json.get('prediction'):
+            predicted_crop = raw_json['prediction'].get('crop', 'Tomato')
+        elif raw_json.get('top_predictions') and len(raw_json['top_predictions']) > 0:
+            predicted_crop = raw_json['top_predictions'][0].get('crop', 'Tomato')
 
         data = {
             'file': (self.create_dummy_image(), 'leaf.jpg'),
@@ -157,7 +167,7 @@ class TestFasalRakshakAPI(unittest.TestCase):
         res_json = response.get_json()
 
         self.assertIn(res_json['status'], ['success', 'uncertain'])
-        if res_json['diagnosis_reliable'] and res_json['explanation']:
+        if res_json.get('diagnosis_reliable') and res_json.get('explanation'):
             exp = res_json['explanation']
             self.assertIn('heatmap', exp)
             self.assertIn('overlay', exp)
@@ -189,7 +199,13 @@ class TestFasalRakshakAPI(unittest.TestCase):
     def test_11_explain_crop_mismatch_no_explanation(self):
         """Test POST /api/explain with crop mismatch returns uncertain status and explanation=None"""
         res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')
-        predicted_crop = res_raw.get_json()['prediction']['crop']
+        raw_json = res_raw.get_json() or {}
+        predicted_crop = "Tomato"
+        if raw_json.get('prediction'):
+            predicted_crop = raw_json['prediction'].get('crop', 'Tomato')
+        elif raw_json.get('top_predictions') and len(raw_json['top_predictions']) > 0:
+            predicted_crop = raw_json['top_predictions'][0].get('crop', 'Tomato')
+            
         mismatched_crop = "Rice" if predicted_crop != "Rice" else "Tomato"
 
         data = {

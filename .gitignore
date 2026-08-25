@@ -64,3 +64,5 @@ Thumbs.db
 dataset_6crop/
 crop_disease_model_v2_candidate.keras
 *.tmp.keras
+best_weights_exp_*.keras
+best_v2_weights.keras

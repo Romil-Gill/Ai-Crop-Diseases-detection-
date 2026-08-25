@@ -61,9 +61,11 @@ if os.path.exists(MODEL_V2_PATH):
             print(f"V2 Model loaded successfully from {MODEL_V2_PATH} ({len(class_names)} classes).")
         else:
             model = None
+            IS_V2_ACTIVE = False
     except Exception as e:
         print(f"WARNING: Unable to load V2 model ({e}), falling back to V1...")
         model = None
+        IS_V2_ACTIVE = False
 
 if model is None and os.path.exists(MODEL_V1_PATH):
     try:
@@ -74,8 +76,11 @@ if model is None and os.path.exists(MODEL_V1_PATH):
     except Exception as e:
         print(f"ERROR loading V1 model: {e}")
         class_names = ORIGINAL_27_CLASSES
+        IS_V2_ACTIVE = False
 else:
-    class_names = ORIGINAL_27_CLASSES
+    if model is None:
+        class_names = ORIGINAL_27_CLASSES
+        IS_V2_ACTIVE = False
 
 SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato", "Wheat", "Maize"] if IS_V2_ACTIVE else ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
 
@@ -137,7 +142,10 @@ def process_and_predict(filepath):
     """
     img = image.load_img(filepath, target_size=(224, 224))
     img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0) / 255.0
+    if IS_V2_ACTIVE:
+        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(np.expand_dims(img_array, axis=0))
+    else:
+        img_array = np.expand_dims(img_array, axis=0) / 255.0
 
     predictions = model.predict(img_array)[0]
     
@@ -701,7 +709,10 @@ def api_explain():
         pil_img = Image.open(filepath).convert('RGB')
         img = image.load_img(filepath, target_size=(224, 224))
         img_array = image.img_to_array(img)
-        img_array = np.expand_dims(img_array, axis=0) / 255.0
+        if IS_V2_ACTIVE:
+            img_array = tf.keras.applications.mobilenet_v2.preprocess_input(np.expand_dims(img_array, axis=0))
+        else:
+            img_array = np.expand_dims(img_array, axis=0) / 255.0
 
         predictions = model.predict(img_array)[0]
         
