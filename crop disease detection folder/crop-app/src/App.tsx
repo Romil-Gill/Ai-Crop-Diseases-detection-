@@ -138,7 +138,7 @@ export const App: React.FC = () => {
         <section className="text-center max-w-3xl mx-auto space-y-4 pt-4 sm:pt-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>MobileNetV2 AI Engine • 27 Crop Classes</span>
+            <span>MobileNetV2 AI Engine • 36 Disease & Health Classes</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-emerald-950 font-outfit tracking-tight leading-[1.1]">

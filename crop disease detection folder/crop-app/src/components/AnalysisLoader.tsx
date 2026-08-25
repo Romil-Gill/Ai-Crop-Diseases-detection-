@@ -9,9 +9,9 @@ interface AnalysisLoaderProps {
 
 const STEPS = [
   'Preprocessing image array to 224x224 RGB float32...',
-  'Normalizing pixel values (/ 255.0 scaling)...',
+  'Normalizing pixel values (MobileNetV2 preprocess_input)...',
   'MobileNetV2 feature extractor forward pass...',
-  'Evaluating 27-class softmax probabilities...',
+  'Evaluating 36-class softmax probabilities...',
   'Running Safe Diagnosis Gate evaluation...',
 ];
 
