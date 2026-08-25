@@ -47,6 +47,13 @@ ORIGINAL_27_CLASSES = [
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
 ]
 
+custom_objs = {
+    'RandomFlip': tf.keras.layers.RandomFlip,
+    'RandomRotation': tf.keras.layers.RandomRotation,
+    'RandomZoom': tf.keras.layers.RandomZoom,
+    'RandomTranslation': tf.keras.layers.RandomTranslation
+}
+
 model = None
 IS_V2_ACTIVE = False
 V2_ERROR = None
@@ -54,9 +61,12 @@ V2_ERROR = None
 if os.path.exists(MODEL_V2_PATH):
     try:
         try:
-            model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False)
-        except Exception as inner_e:
-            model = tf.keras.models.load_model(MODEL_V2_PATH)
+            model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False, custom_objects=custom_objs)
+        except Exception:
+            try:
+                model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False)
+            except Exception:
+                model = tf.keras.models.load_model(MODEL_V2_PATH)
             
         if model.output_shape[-1] == 36 and os.path.exists(MAPPING_V2_PATH):
             with open(MAPPING_V2_PATH, "r", encoding="utf-8") as f:
@@ -244,12 +254,20 @@ except Exception as e:
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
+    active_model_file = "crop_disease_model_v2_6crop.keras" if IS_V2_ACTIVE else ("crop_disease_model.keras" if model is not None else "none")
+    output_classes = model.output_shape[-1] if model is not None else 0
+    prep_name = "mobilenet_v2.preprocess_input" if IS_V2_ACTIVE else "x / 255.0"
+
     return jsonify({
-        "status": "ok",
+        "status": "ok" if model is not None else "model_not_loaded",
         "model_loaded": model is not None,
-        "is_v2_active": IS_V2_ACTIVE,
-        "v2_error": V2_ERROR if 'V2_ERROR' in globals() else None,
+        "active_model": active_model_file,
+        "model_output_classes": output_classes,
+        "active_crops": len(SUPPORTED_CROPS),
         "total_classes": len(class_names),
+        "preprocessing": prep_name,
+        "v2_loaded": IS_V2_ACTIVE,
+        "v2_error": V2_ERROR if 'V2_ERROR' in globals() else None,
         "supported_crops": SUPPORTED_CROPS
     }), 200
 

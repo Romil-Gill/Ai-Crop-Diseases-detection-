@@ -122,6 +122,18 @@ class TestFasalRakshakAPI(unittest.TestCase):
         self.assertIn('Unsupported selected_crop', res_json['error'])
         print("[TEST 6 PASSED] /api/predict unsupported selected_crop 'Apple' rejected with HTTP 400.")
 
+    def test_06b_predict_and_explain_accepts_wheat_and_maize(self):
+        """Test POST /api/predict and /api/explain accept Wheat and Maize without unsupported-crop HTTP 400"""
+        for crop in ['Wheat', 'Maize']:
+            data = {'file': (self.create_dummy_image(), 'leaf.jpg'), 'selected_crop': crop}
+            res = self.client.post('/api/predict', data=data, content_type='multipart/form-data')
+            self.assertEqual(res.status_code, 200, f"/api/predict failed for selected_crop '{crop}' with status {res.status_code}")
+            
+            data_exp = {'file': (self.create_dummy_image(), 'leaf.jpg'), 'selected_crop': crop}
+            res_exp = self.client.post('/api/explain', data=data_exp, content_type='multipart/form-data')
+            self.assertEqual(res_exp.status_code, 200, f"/api/explain failed for selected_crop '{crop}' with status {res_exp.status_code}")
+        print("[TEST 6b PASSED] /api/predict and /api/explain successfully accepted selected_crop 'Wheat' and 'Maize'.")
+
     def test_07_predict_crop_mismatch_handling(self):
         """Test POST /api/predict with mismatching crop selection to trigger Safe Diagnosis Gate"""
         res_raw = self.client.post('/api/predict', data={'file': (self.create_dummy_image(), 'leaf.jpg')}, content_type='multipart/form-data')

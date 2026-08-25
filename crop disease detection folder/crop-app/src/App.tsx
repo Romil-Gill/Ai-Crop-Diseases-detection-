@@ -38,6 +38,13 @@ export const App: React.FC = () => {
   const [savedScanRecord, setSavedScanRecord] = useState<ScanRecord | null>(null);
 
   const scannerRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (analysisResult && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [analysisResult]);
 
   // Check Backend Server Health on Mount
   useEffect(() => {
@@ -177,7 +184,7 @@ export const App: React.FC = () => {
         </section>
 
         {/* STEP 1: CROP SELECTOR */}
-        <section ref={scannerRef} className="pt-4 scroll-mt-20">
+        <section ref={scannerRef} className="pt-4 scroll-mt-28">
           <CropSelector
             selectedCrop={selectedCrop}
             onSelectCrop={(crop) => {
@@ -232,7 +239,7 @@ export const App: React.FC = () => {
 
           {/* State 5: Successful / Reliable Diagnosis */}
           {analysisResult && analysisResult.diagnosis_reliable && (
-            <div className="space-y-6">
+            <div ref={resultsRef} className="space-y-6 scroll-mt-28">
               {/* 1. AI Crop Assessment + Model Confidence */}
               <DiagnosisCard result={analysisResult} />
               
