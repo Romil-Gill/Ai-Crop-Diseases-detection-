@@ -48,7 +48,13 @@ export const App: React.FC = () => {
         setServerOnline(false);
       }
     };
+    
+    // Initial check
     verifyBackend();
+    
+    // Poll every 30 seconds
+    const intervalId = setInterval(verifyBackend, 30000);
+    return () => clearInterval(intervalId);
   }, []);
 
   // Handle Image File Selection
@@ -315,7 +321,11 @@ export const App: React.FC = () => {
               result={analysisResult}
               selectedCrop={selectedCrop}
               onResetUpload={handleResetUpload}
-              onChangeCrop={() => setSelectedCrop(null)}
+              onChangeCrop={() => {
+                setSelectedCrop(null);
+                setAnalysisResult(null);
+                setErrorMessage(null);
+              }}
             />
           )}
 

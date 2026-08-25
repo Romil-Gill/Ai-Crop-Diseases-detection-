@@ -121,6 +121,21 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({ selectedCrop, onFi
           </p>
         </div>
       </div>
+
+      {selectedCrop && (
+        <div className="mt-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-left">
+          <h5 className="text-xs font-bold text-slate-700 mb-2 font-outfit">For best results:</h5>
+          <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-4">
+            <li>Use one clearly visible leaf</li>
+            <li>Capture the leaf close-up</li>
+            <li>Use good natural lighting</li>
+            <li>Avoid heavy blur</li>
+            <li>Avoid screenshots with text/watermarks</li>
+            <li>Avoid multiple overlapping leaves</li>
+            <li>Keep the leaf as the main object</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
