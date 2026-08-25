@@ -49,12 +49,13 @@ ORIGINAL_27_CLASSES = [
 
 model = None
 IS_V2_ACTIVE = False
+V2_ERROR = None
 
 if os.path.exists(MODEL_V2_PATH):
     try:
         try:
             model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False)
-        except Exception:
+        except Exception as inner_e:
             model = tf.keras.models.load_model(MODEL_V2_PATH)
             
         if model.output_shape[-1] == 36 and os.path.exists(MAPPING_V2_PATH):
@@ -66,10 +67,14 @@ if os.path.exists(MODEL_V2_PATH):
         else:
             model = None
             IS_V2_ACTIVE = False
+            V2_ERROR = f"Output shape mismatch: {model.output_shape if model else None} or mapping missing: {os.path.exists(MAPPING_V2_PATH)}"
     except Exception as e:
         print(f"WARNING: Unable to load V2 model ({e}), falling back to V1...")
+        V2_ERROR = str(e)
         model = None
         IS_V2_ACTIVE = False
+else:
+    V2_ERROR = f"MODEL_V2_PATH does not exist at {MODEL_V2_PATH}"
 
 if model is None and os.path.exists(MODEL_V1_PATH):
     try:
@@ -239,12 +244,13 @@ except Exception as e:
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
-    status_msg = "ok" if model is not None else "model_not_loaded"
     return jsonify({
-        "status": status_msg,
+        "status": "ok",
         "model_loaded": model is not None,
-        "supported_crops": SUPPORTED_CROPS,
-        "total_classes": len(class_names)
+        "is_v2_active": IS_V2_ACTIVE,
+        "v2_error": V2_ERROR if 'V2_ERROR' in globals() else None,
+        "total_classes": len(class_names),
+        "supported_crops": SUPPORTED_CROPS
     }), 200
 
 @app.route('/api/location-search', methods=['GET'])
