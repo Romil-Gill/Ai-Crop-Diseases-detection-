@@ -70,6 +70,32 @@ const CROP_OPTIONS: CropOption[] = [
       </svg>
     ),
   },
+  {
+    id: 'Wheat',
+    name: 'Wheat',
+    hindiName: 'गेहूं',
+    classesCount: 5,
+    description: 'Leaf Rust, Stripe Rust, Powdery Mildew, Septoria',
+    colorTheme: 'from-amber-600/10 to-yellow-600/5 border-amber-200 hover:border-amber-400 text-amber-800',
+    iconSvg: (
+      <svg className="w-8 h-8 text-amber-700" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L13 6H11L12 2ZM10 8L8 12H10L12 16H8L6 20H18L16 16H12L14 12H16L14 8H10Z"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'Maize',
+    name: 'Maize',
+    hindiName: 'मक्का',
+    classesCount: 4,
+    description: 'Common Rust, Northern Leaf Blight, Gray Leaf Spot',
+    colorTheme: 'from-yellow-500/10 to-lime-500/5 border-yellow-200 hover:border-yellow-400 text-yellow-800',
+    iconSvg: (
+      <svg className="w-8 h-8 text-yellow-600" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2C10 2 8 4 8 8V16C8 20 10 22 12 22C14 22 16 20 16 16V8C16 4 14 2 12 2ZM10 8C10 6.9 10.9 6 12 6C13.1 6 14 6.9 14 8V10H10V8Z"/>
+      </svg>
+    ),
+  },
 ];
 
 export const CropSelector: React.FC<CropSelectorProps> = ({ selectedCrop, onSelectCrop }) => {
@@ -82,7 +108,7 @@ export const CropSelector: React.FC<CropSelectorProps> = ({ selectedCrop, onSele
             Step 1: Select Target Crop
           </h3>
           <p className="text-xs text-slate-500">
-            Choose the crop species for leaf diagnosis. Must match the uploaded image.
+            Choose the crop species for leaf diagnosis (6 Supported Crops). Must match the uploaded image.
           </p>
         </div>
 
@@ -94,7 +120,7 @@ export const CropSelector: React.FC<CropSelectorProps> = ({ selectedCrop, onSele
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {CROP_OPTIONS.map((crop) => {
           const isSelected = selectedCrop === crop.id;
           return (

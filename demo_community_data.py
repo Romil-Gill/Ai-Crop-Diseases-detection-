@@ -190,7 +190,7 @@ def get_demo_signals() -> List[Dict[str, Any]]:
             "status": "reported_signal"
         },
 
-        # Panchkula Cluster (Low Activity - Tomato)
+        # Panchkula Cluster (Low Activity - Tomato & Wheat)
         {
             "id": 9013,
             "created_at": (now - timedelta(days=5)).strftime("%Y-%m-%d %H:%M:%S"),
@@ -203,6 +203,35 @@ def get_demo_signals() -> List[Dict[str, Any]]:
             "symptom_agreement": "high",
             "field_concern": "LOW",
             "weather_favorability": "MODERATE",
+            "status": "reported_signal"
+        },
+        # Hisar Cluster (Wheat & Maize Signals)
+        {
+            "id": 9014,
+            "created_at": (now - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S"),
+            "crop": "Wheat",
+            "class_name": "Wheat___Stripe_Rust",
+            "condition": "Stripe Rust",
+            "area_name": "Hisar",
+            "map_lat": 29.1,
+            "map_lon": 75.7,
+            "symptom_agreement": "high",
+            "field_concern": "HIGH",
+            "weather_favorability": "HIGH",
+            "status": "reported_signal"
+        },
+        {
+            "id": 9015,
+            "created_at": (now - timedelta(days=1, hours=4)).strftime("%Y-%m-%d %H:%M:%S"),
+            "crop": "Maize",
+            "class_name": "Maize___Common_Rust",
+            "condition": "Common Rust",
+            "area_name": "Hisar",
+            "map_lat": 29.1,
+            "map_lon": 75.7,
+            "symptom_agreement": "high",
+            "field_concern": "MODERATE",
+            "weather_favorability": "HIGH",
             "status": "reported_signal"
         }
     ]

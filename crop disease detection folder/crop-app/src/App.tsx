@@ -10,6 +10,7 @@ import { GradCamVisualizer } from './components/GradCamVisualizer';
 import { SymptomVerification } from './components/SymptomVerification';
 import { WeatherContextPanel } from './components/WeatherContextPanel';
 import { AdvisoryPanel } from './components/AdvisoryPanel';
+import { TreatmentOptionsCard } from './components/TreatmentOptionsCard';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
 import { ErrorState } from './components/ErrorState';
@@ -161,11 +162,11 @@ export const App: React.FC = () => {
           {/* Quick Stats Grid */}
           <div className="pt-6 grid grid-cols-3 gap-3 max-w-lg mx-auto">
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
-              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">4</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">6</span>
               <span className="text-[11px] font-semibold text-slate-500">Supported Crops</span>
             </div>
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
-              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">27</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">36</span>
               <span className="text-[11px] font-semibold text-slate-500">Disease & Healthy</span>
             </div>
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
@@ -274,6 +275,12 @@ export const App: React.FC = () => {
                   Guidance temporarily unavailable for this condition.
                 </div>
               )}
+
+              {/* 6. Source-Backed Treatment Options */}
+              <TreatmentOptionsCard
+                treatmentOptions={analysisResult.treatment_options}
+                isReliable={analysisResult.diagnosis_reliable}
+              />
 
               {/* 4. Other Possible Crop Matches */}
               <TopPredictions

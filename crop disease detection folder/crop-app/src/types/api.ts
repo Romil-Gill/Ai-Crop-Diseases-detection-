@@ -1,4 +1,4 @@
-export type SupportedCrop = 'Tomato' | 'Rice' | 'Sugarcane' | 'Pumpkin';
+export type SupportedCrop = 'Tomato' | 'Rice' | 'Sugarcane' | 'Pumpkin' | 'Wheat' | 'Maize';
 
 export interface ClassInfo {
   class_name: string;
@@ -286,6 +286,29 @@ export interface CommunityRadarResponse {
   message?: string;
 }
 
+export interface ChemicalOption {
+  active_ingredient: string;
+  purpose: string;
+  restrictions_or_notes: string;
+  source: string;
+}
+
+export interface TreatmentOptions {
+  available: boolean;
+  crop?: string;
+  disease?: string;
+  treatment_required?: boolean;
+  message?: string;
+  reason?: string;
+  immediate_actions?: string[];
+  cultural_controls?: string[];
+  biological_controls?: string[];
+  chemical_options?: ChemicalOption[];
+  expert_escalation?: string[];
+  sources?: AdvisorySource[];
+  safety_notice?: string;
+}
+
 export interface PredictResponse {
   status: 'success' | 'uncertain';
   selected_crop?: string | null;
@@ -296,6 +319,7 @@ export interface PredictResponse {
   is_healthy: boolean;
   explanation?: GradCamExplanation | null;
   advisory?: AdvisoryContent | null;
+  treatment_options?: TreatmentOptions | null;
 }
 
 export interface ApiError {

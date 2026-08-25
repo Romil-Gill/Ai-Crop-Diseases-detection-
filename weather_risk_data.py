@@ -195,6 +195,70 @@ WEATHER_DISEASE_RULES = {
         "has_rules": False,
         "description": "Pumpkin mosaic virus is aphid-transmitted. Direct weather favorability rules are not applicable.",
         "sources": ["ICAR - IIHR"]
+    },
+
+    # -------------------------------------------------------------------------
+    # WHEAT DISEASES
+    # -------------------------------------------------------------------------
+    "Wheat___Leaf_Rust": {
+        "has_rules": True,
+        "temp_range": (15.0, 25.0),
+        "humidity_min": 75.0,
+        "rain_favorable": True,
+        "description": "Leaf rust (brown rust) spore germination is favored by moderate temperatures (15-25°C), high relative humidity (>75%), and heavy dew or rain.",
+        "sources": ["ICAR - Indian Institute of Wheat and Barley Research (IIWBR)"]
+    },
+    "Wheat___Stripe_Rust": {
+        "has_rules": True,
+        "temp_range": (7.0, 18.0),        # Cool temperatures favor stripe rust
+        "humidity_min": 80.0,
+        "rain_favorable": True,
+        "description": "Yellow/Stripe rust thrives in cool winter temperatures (7-18°C), persistent fog, high relative humidity (>80%), and frequent light rains.",
+        "sources": ["ICAR - IIWBR Karnal", "PAU Ludhiana"]
+    },
+    "Wheat___Powdery_Mildew": {
+        "has_rules": True,
+        "temp_range": (15.0, 22.0),
+        "humidity_min": 80.0,
+        "rain_favorable": False,         # Heavy rain washes spores
+        "description": "Powdery mildew on wheat is favored by cool, cloudy days (15-22°C) and high relative humidity (>80%) in dense crop canopies.",
+        "sources": ["ICAR - IIWBR"]
+    },
+    "Wheat___Septoria": {
+        "has_rules": True,
+        "temp_range": (15.0, 24.0),
+        "humidity_min": 85.0,
+        "rain_favorable": True,
+        "description": "Septoria leaf blotch pycnidiospores require splash rainfall and prolonged leaf wetness at moderate temperatures (15-24°C) for canopy spread.",
+        "sources": ["ICAR - IIWBR"]
+    },
+
+    # -------------------------------------------------------------------------
+    # MAIZE DISEASES
+    # -------------------------------------------------------------------------
+    "Maize___Common_Rust": {
+        "has_rules": True,
+        "temp_range": (16.0, 25.0),
+        "humidity_min": 80.0,
+        "rain_favorable": True,
+        "description": "Common rust in maize is favored by cool-to-moderate temperatures (16-25°C), high humidity (>80%), and heavy morning dews.",
+        "sources": ["ICAR - Indian Institute of Maize Research (IIMR)"]
+    },
+    "Maize___Northern_Leaf_Blight": {
+        "has_rules": True,
+        "temp_range": (18.0, 27.0),
+        "humidity_min": 80.0,
+        "rain_favorable": True,
+        "description": "Northern leaf blight (Exserohilum turcicum) spore production requires moderate temperatures (18-27°C) and extended leaf wetness (dew or rain).",
+        "sources": ["ICAR - IIMR Ludhiana"]
+    },
+    "Maize___Gray_Leaf_Spot": {
+        "has_rules": True,
+        "temp_range": (22.0, 30.0),
+        "humidity_min": 85.0,
+        "rain_favorable": True,
+        "description": "Gray leaf spot thrives under warm, humid monsoonal conditions (22-30°C) with persistent high relative humidity (>85%).",
+        "sources": ["ICAR - IIMR"]
     }
 }
 

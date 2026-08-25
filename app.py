@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
 import os
+import json
 from werkzeug.utils import secure_filename
 from PIL import Image
 
@@ -30,18 +31,11 @@ def request_entity_too_large(error):
 
 # Load pre-trained model
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "crop_disease_model.keras")
-model = None
-if os.path.exists(MODEL_PATH):
-    try:
-        model = tf.keras.models.load_model(MODEL_PATH)
-        print(f"Model loaded successfully from {MODEL_PATH}")
-    except Exception as e:
-        print(f"ERROR loading model: {e}")
-else:
-    print(f"WARNING: Model file {MODEL_PATH} not found!")
+MODEL_V2_PATH = os.path.join(BASE_DIR, "crop_disease_model_v2_6crop.keras")
+MODEL_V1_PATH = os.path.join(BASE_DIR, "crop_disease_model.keras")
+MAPPING_V2_PATH = os.path.join(BASE_DIR, "class_mapping_v2.json")
 
-class_names = [
+ORIGINAL_27_CLASSES = [
     'Pumpkin-Bacterial Leaf Spot', 'Pumpkin-Downy Mildew', 'Pumpkin-Healthy Leaf', 
     'Pumpkin-Mosaic Disease', 'Pumpkin-Powdery_Mildew', 'Rice-Bacterialblight', 
     'Rice-Brownspot', 'Rice-Leafsmut', 'Sugarcane-Grassy Shoot', 'Sugarcane-Healthy', 
@@ -53,7 +47,37 @@ class_names = [
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
 ]
 
-SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
+model = None
+IS_V2_ACTIVE = False
+
+if os.path.exists(MODEL_V2_PATH):
+    try:
+        model = tf.keras.models.load_model(MODEL_V2_PATH)
+        if model.output_shape[-1] == 36 and os.path.exists(MAPPING_V2_PATH):
+            with open(MAPPING_V2_PATH, "r", encoding="utf-8") as f:
+                mapping_dict = json.load(f)
+                class_names = [mapping_dict[str(i)] for i in range(len(mapping_dict))]
+            IS_V2_ACTIVE = True
+            print(f"V2 Model loaded successfully from {MODEL_V2_PATH} ({len(class_names)} classes).")
+        else:
+            model = None
+    except Exception as e:
+        print(f"WARNING: Unable to load V2 model ({e}), falling back to V1...")
+        model = None
+
+if model is None and os.path.exists(MODEL_V1_PATH):
+    try:
+        model = tf.keras.models.load_model(MODEL_V1_PATH)
+        class_names = ORIGINAL_27_CLASSES
+        IS_V2_ACTIVE = False
+        print(f"V1 Production Model loaded successfully from {MODEL_V1_PATH} ({len(class_names)} classes).")
+    except Exception as e:
+        print(f"ERROR loading V1 model: {e}")
+        class_names = ORIGINAL_27_CLASSES
+else:
+    class_names = ORIGINAL_27_CLASSES
+
+SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato", "Wheat", "Maize"] if IS_V2_ACTIVE else ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
 
 HUMAN_CONDITION_MAP = {
     "bacterialblight": "Bacterial Blight",
@@ -77,6 +101,12 @@ HUMAN_CONDITION_MAP = {
     "ring spot": "Ring Spot",
     "yellow leaf disease": "Yellow Leaf Disease",
     "grassy shoot": "Grassy Shoot",
+    "leaf rust": "Leaf Rust",
+    "stripe rust": "Stripe Rust",
+    "septoria": "Septoria Leaf Spot",
+    "common rust": "Common Rust",
+    "northern leaf blight": "Northern Leaf Blight",
+    "gray leaf spot": "Gray Leaf Spot",
     "healthy": "Healthy"
 }
 
@@ -186,6 +216,7 @@ def predict_api():
 from advisory_data import ADVISORY_DATABASE
 from symptom_data import SYMPTOM_QUESTIONS, FIELD_SPREAD_OPTIONS, evaluate_symptom_verification
 from weather_service import search_location, fetch_weather_context
+from treatment_data import get_treatment_options
 import database
 
 # Initialize SQLite database tables automatically
@@ -395,6 +426,25 @@ def api_get_community_radar():
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve community radar ({str(e)})."}), 500
 
+@app.route('/api/treatment-options', methods=['GET'])
+def api_treatment_options():
+    c_name = request.args.get('class_name')
+    if not c_name:
+        return jsonify({"error": "Missing required query parameter 'class_name'."}), 400
+
+    c_name = c_name.strip()
+    if c_name not in class_names:
+        return jsonify({
+            "error": f"Unsupported or invalid class_name '{c_name}'."
+        }), 400
+
+    treatment = get_treatment_options(c_name, diagnosis_reliable=True)
+    return jsonify({
+        "status": "success",
+        "class_name": c_name,
+        "treatment_options": treatment
+    }), 200
+
 @app.route('/api/symptom-questions', methods=['GET'])
 def api_symptom_questions():
     c_name = request.args.get('class_name')
@@ -584,6 +634,8 @@ def api_predict():
             for p in top3
         ]
 
+        treatment_options = get_treatment_options(top1["class_name"], diagnosis_reliable=diagnosis_reliable)
+
         return jsonify({
             "status": status,
             "selected_crop": selected_crop,
@@ -596,7 +648,8 @@ def api_predict():
             "top_predictions": top_predictions_formatted,
             "diagnosis_reliable": diagnosis_reliable,
             "uncertainty_reason": uncertainty_reason,
-            "is_healthy": top1["is_healthy"]
+            "is_healthy": top1["is_healthy"],
+            "treatment_options": treatment_options
         }), 200
 
     except Exception as e:
