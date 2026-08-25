@@ -8,7 +8,11 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 
 app = Flask(__name__)
-CORS(app)
+frontend_origin = os.environ.get("FRONTEND_ORIGIN")
+if frontend_origin:
+    CORS(app, resources={r"/*": {"origins": [frontend_origin, "http://localhost:5173", "http://127.0.0.1:5173"]}})
+else:
+    CORS(app)
 
 # Configuration
 UPLOAD_FOLDER = "uploads"
@@ -17,11 +21,16 @@ MIN_CONFIDENCE_THRESHOLD = 50.0  # Percentage
 MIN_MARGIN_THRESHOLD = 10.0      # Top-1 vs Top-2 percentage margin
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024  # 4 MB max upload size
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB max upload size
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({"error": "File too large. Maximum upload size is 10 MB."}), 413
+
 # Load pre-trained model
-MODEL_PATH = "crop_disease_model.keras"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "crop_disease_model.keras")
 model = None
 if os.path.exists(MODEL_PATH):
     try:
@@ -187,8 +196,9 @@ except Exception as e:
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
+    status_msg = "ok" if model is not None else "model_not_loaded"
     return jsonify({
-        "status": "ok",
+        "status": status_msg,
         "model_loaded": model is not None,
         "supported_crops": SUPPORTED_CROPS,
         "total_classes": len(class_names)
@@ -737,4 +747,5 @@ def api_explain():
 
 if __name__ == '__main__':
     use_reloader = os.environ.get("FLASK_RELOAD", "false").lower() == "true"
-    app.run(debug=True, use_reloader=use_reloader, port=5000)
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug_mode, use_reloader=use_reloader, port=5000)
