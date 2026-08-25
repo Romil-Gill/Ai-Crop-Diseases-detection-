@@ -52,7 +52,11 @@ IS_V2_ACTIVE = False
 
 if os.path.exists(MODEL_V2_PATH):
     try:
-        model = tf.keras.models.load_model(MODEL_V2_PATH)
+        try:
+            model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False)
+        except Exception:
+            model = tf.keras.models.load_model(MODEL_V2_PATH)
+            
         if model.output_shape[-1] == 36 and os.path.exists(MAPPING_V2_PATH):
             with open(MAPPING_V2_PATH, "r", encoding="utf-8") as f:
                 mapping_dict = json.load(f)
