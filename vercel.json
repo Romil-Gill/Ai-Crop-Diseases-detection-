@@ -1,0 +1,7 @@
+{
+  "buildCommand": "cd \"crop disease detection folder/crop-app\" && npm install && npm run build",
+  "outputDirectory": "crop disease detection folder/crop-app/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
