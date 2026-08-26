@@ -70,7 +70,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              History
+              Saved Assessments
             </button>
             <button
               type="button"

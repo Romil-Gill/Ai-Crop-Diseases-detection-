@@ -298,7 +298,7 @@ export const App: React.FC = () => {
               {/* 5. Save Assessment Action Row */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900 text-white shadow-lg border border-slate-800">
                 <div>
-                  <h4 className="font-extrabold font-outfit text-base text-white">Save Assessment to Local History</h4>
+                  <h4 className="font-extrabold font-outfit text-base text-white">Save Assessment</h4>
                   <p className="text-xs text-slate-300">Store this reliable assessment record in SQLite for crop health timeline tracking.</p>
                 </div>
                 <SaveAssessmentButton

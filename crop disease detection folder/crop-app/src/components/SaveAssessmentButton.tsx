@@ -67,7 +67,7 @@ export const SaveAssessmentButton: React.FC<SaveAssessmentButtonProps> = ({
     return (
       <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-emerald-100 text-emerald-950 text-xs font-bold border border-emerald-300 font-outfit shadow-2xs">
         <Check className="w-4 h-4 text-emerald-700" />
-        <span>Assessment Saved to History</span>
+        <span>Assessment Saved</span>
       </div>
     );
   }

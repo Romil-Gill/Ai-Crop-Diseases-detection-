@@ -45,7 +45,7 @@ export const HistoryPage: React.FC<HistoryPageProps> = ({ onNavigateHome }) => {
             <span>SQLite Local Scan Repository</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold font-outfit text-slate-900">
-            Assessment History
+            Saved Assessments
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 font-medium">
             Review your previously saved reliable crop health assessments.
