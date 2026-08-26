@@ -1,0 +1,6 @@
+crop disease detection folder/
+node_modules/
+.git/
+.vercel/
+external_stress_test/
+*.csv
