@@ -51,15 +51,9 @@ export const UncertainState: React.FC<UncertainStateProps> = ({
         </p>
 
         {selectedCrop && (
-          <div className="mt-3 pt-3 border-t border-amber-200/80 grid grid-cols-2 gap-2 text-[11px]">
-            <div>
-              <span className="text-amber-800 font-medium">Your Selected Crop:</span>
-              <span className="font-bold text-slate-900 ml-1">{selectedCrop}</span>
-            </div>
-            <div>
-              <span className="text-amber-800 font-medium">Top Crop Evidence:</span>
-              <span className="font-bold text-slate-900 ml-1">{result.best_crop_by_mass || 'Unverified'}</span>
-            </div>
+          <div className="mt-3 pt-3 border-t border-amber-200/80 text-[11px]">
+            <span className="text-amber-800 font-medium">Your Selected Crop:</span>
+            <span className="font-bold text-slate-900 ml-1">{selectedCrop}</span>
           </div>
         )}
       </div>
@@ -120,7 +114,7 @@ export const UncertainState: React.FC<UncertainStateProps> = ({
             <p className="text-[11px] text-amber-900/80 mb-3 bg-amber-100/40 p-2.5 rounded-lg border border-amber-200">
               Note: Below raw top predictions were flagged by the Safe Diagnosis Gate as unverified.
             </p>
-            <TopPredictions predictions={result.raw_top_predictions || result.top_predictions} />
+            <TopPredictions predictions={result.top_predictions} />
           </div>
         )}
       </div>

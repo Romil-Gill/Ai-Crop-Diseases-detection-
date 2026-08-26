@@ -1,0 +1,13 @@
+requirements.txt
+runtime.txt
+app.py
+*.py
+node_modules
+crop disease detection folder/crop-app/node_modules
+.venv
+venv
+env
+dataset_6crop
+external_stress_test
+*.keras
+*.csv
