@@ -14,7 +14,7 @@ def generate_gradcam(model, img_array, target_class_idx=None, original_pil_image
         raise ValueError("Model is not loaded.")
 
     try:
-        base_model = next((l for l in model.layers if "mobilenetv2" in l.name.lower()), model.layers[0])
+        base_model = model.layers[0]  # mobilenetv2_1.00_224
         target_layer_name = "mobilenetv2_1.00_224/out_relu"
         target_layer = base_model.get_layer("out_relu")
 
@@ -31,9 +31,8 @@ def generate_gradcam(model, img_array, target_class_idx=None, original_pil_image
             tape.watch(conv_outputs)
 
             # 2. Pass feature maps through outer model layers (GAP -> Dense 128 -> Dense 27)
-            base_model_idx = next((i for i, l in enumerate(model.layers) if "mobilenetv2" in l.name.lower()), 0)
             x = conv_outputs
-            for layer in model.layers[base_model_idx + 1:]:
+            for layer in model.layers[1:]:
                 x = layer(x)
 
             preds = x

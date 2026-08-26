@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
             <Sparkles className="w-3 h-3 text-amber-400" /> MobileNetV2 Architecture
           </span>
           <span>•</span>
-          <span>6 Crops (36 Classes)</span>
+          <span>4 Crops (27 Classes)</span>
           <span>•</span>
           <span>Safe Diagnosis Engine</span>
         </div>

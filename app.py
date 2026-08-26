@@ -4,7 +4,6 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
 import os
-import json
 from werkzeug.utils import secure_filename
 from PIL import Image
 
@@ -31,11 +30,18 @@ def request_entity_too_large(error):
 
 # Load pre-trained model
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_V2_PATH = os.path.join(BASE_DIR, "crop_disease_model_v2_6crop.keras")
-MODEL_V1_PATH = os.path.join(BASE_DIR, "crop_disease_model.keras")
-MAPPING_V2_PATH = os.path.join(BASE_DIR, "class_mapping_v2.json")
+MODEL_PATH = os.path.join(BASE_DIR, "crop_disease_model.keras")
+model = None
+if os.path.exists(MODEL_PATH):
+    try:
+        model = tf.keras.models.load_model(MODEL_PATH)
+        print(f"Model loaded successfully from {MODEL_PATH}")
+    except Exception as e:
+        print(f"ERROR loading model: {e}")
+else:
+    print(f"WARNING: Model file {MODEL_PATH} not found!")
 
-ORIGINAL_27_CLASSES = [
+class_names = [
     'Pumpkin-Bacterial Leaf Spot', 'Pumpkin-Downy Mildew', 'Pumpkin-Healthy Leaf', 
     'Pumpkin-Mosaic Disease', 'Pumpkin-Powdery_Mildew', 'Rice-Bacterialblight', 
     'Rice-Brownspot', 'Rice-Leafsmut', 'Sugarcane-Grassy Shoot', 'Sugarcane-Healthy', 
@@ -47,61 +53,7 @@ ORIGINAL_27_CLASSES = [
     'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
 ]
 
-custom_objs = {
-    'RandomFlip': tf.keras.layers.RandomFlip,
-    'RandomRotation': tf.keras.layers.RandomRotation,
-    'RandomZoom': tf.keras.layers.RandomZoom,
-    'RandomTranslation': tf.keras.layers.RandomTranslation
-}
-
-model = None
-IS_V2_ACTIVE = False
-V2_ERROR = None
-
-if os.path.exists(MODEL_V2_PATH):
-    try:
-        try:
-            model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False, custom_objects=custom_objs)
-        except Exception:
-            try:
-                model = tf.keras.models.load_model(MODEL_V2_PATH, compile=False)
-            except Exception:
-                model = tf.keras.models.load_model(MODEL_V2_PATH)
-            
-        if model.output_shape[-1] == 36 and os.path.exists(MAPPING_V2_PATH):
-            with open(MAPPING_V2_PATH, "r", encoding="utf-8") as f:
-                mapping_dict = json.load(f)
-                class_names = [mapping_dict[str(i)] for i in range(len(mapping_dict))]
-            IS_V2_ACTIVE = True
-            print(f"V2 Model loaded successfully from {MODEL_V2_PATH} ({len(class_names)} classes).")
-        else:
-            model = None
-            IS_V2_ACTIVE = False
-            V2_ERROR = f"Output shape mismatch: {model.output_shape if model else None} or mapping missing: {os.path.exists(MAPPING_V2_PATH)}"
-    except Exception as e:
-        print(f"WARNING: Unable to load V2 model ({e}), falling back to V1...")
-        V2_ERROR = str(e)
-        model = None
-        IS_V2_ACTIVE = False
-else:
-    V2_ERROR = f"MODEL_V2_PATH does not exist at {MODEL_V2_PATH}"
-
-if model is None and os.path.exists(MODEL_V1_PATH):
-    try:
-        model = tf.keras.models.load_model(MODEL_V1_PATH)
-        class_names = ORIGINAL_27_CLASSES
-        IS_V2_ACTIVE = False
-        print(f"V1 Production Model loaded successfully from {MODEL_V1_PATH} ({len(class_names)} classes).")
-    except Exception as e:
-        print(f"ERROR loading V1 model: {e}")
-        class_names = ORIGINAL_27_CLASSES
-        IS_V2_ACTIVE = False
-else:
-    if model is None:
-        class_names = ORIGINAL_27_CLASSES
-        IS_V2_ACTIVE = False
-
-SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato", "Wheat", "Maize"] if IS_V2_ACTIVE else ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
+SUPPORTED_CROPS = ["Pumpkin", "Rice", "Sugarcane", "Tomato"]
 
 HUMAN_CONDITION_MAP = {
     "bacterialblight": "Bacterial Blight",
@@ -125,12 +77,6 @@ HUMAN_CONDITION_MAP = {
     "ring spot": "Ring Spot",
     "yellow leaf disease": "Yellow Leaf Disease",
     "grassy shoot": "Grassy Shoot",
-    "leaf rust": "Leaf Rust",
-    "stripe rust": "Stripe Rust",
-    "septoria": "Septoria Leaf Spot",
-    "common rust": "Common Rust",
-    "northern leaf blight": "Northern Leaf Blight",
-    "gray leaf spot": "Gray Leaf Spot",
     "healthy": "Healthy"
 }
 
@@ -161,10 +107,7 @@ def process_and_predict(filepath):
     """
     img = image.load_img(filepath, target_size=(224, 224))
     img_array = image.img_to_array(img)
-    if IS_V2_ACTIVE:
-        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(np.expand_dims(img_array, axis=0))
-    else:
-        img_array = np.expand_dims(img_array, axis=0) / 255.0
+    img_array = np.expand_dims(img_array, axis=0) / 255.0
 
     predictions = model.predict(img_array)[0]
     
@@ -243,7 +186,6 @@ def predict_api():
 from advisory_data import ADVISORY_DATABASE
 from symptom_data import SYMPTOM_QUESTIONS, FIELD_SPREAD_OPTIONS, evaluate_symptom_verification
 from weather_service import search_location, fetch_weather_context
-from treatment_data import get_treatment_options
 import database
 
 # Initialize SQLite database tables automatically
@@ -254,21 +196,12 @@ except Exception as e:
 
 @app.route('/api/health', methods=['GET'])
 def api_health():
-    active_model_file = "crop_disease_model_v2_6crop.keras" if IS_V2_ACTIVE else ("crop_disease_model.keras" if model is not None else "none")
-    output_classes = model.output_shape[-1] if model is not None else 0
-    prep_name = "mobilenet_v2.preprocess_input" if IS_V2_ACTIVE else "x / 255.0"
-
+    status_msg = "ok" if model is not None else "model_not_loaded"
     return jsonify({
-        "status": "ok" if model is not None else "model_not_loaded",
+        "status": status_msg,
         "model_loaded": model is not None,
-        "active_model": active_model_file,
-        "model_output_classes": output_classes,
-        "active_crops": len(SUPPORTED_CROPS),
-        "total_classes": len(class_names),
-        "preprocessing": prep_name,
-        "v2_loaded": IS_V2_ACTIVE,
-        "v2_error": V2_ERROR if 'V2_ERROR' in globals() else None,
-        "supported_crops": SUPPORTED_CROPS
+        "supported_crops": SUPPORTED_CROPS,
+        "total_classes": len(class_names)
     }), 200
 
 @app.route('/api/location-search', methods=['GET'])
@@ -462,25 +395,6 @@ def api_get_community_radar():
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve community radar ({str(e)})."}), 500
 
-@app.route('/api/treatment-options', methods=['GET'])
-def api_treatment_options():
-    c_name = request.args.get('class_name')
-    if not c_name:
-        return jsonify({"error": "Missing required query parameter 'class_name'."}), 400
-
-    c_name = c_name.strip()
-    if c_name not in class_names:
-        return jsonify({
-            "error": f"Unsupported or invalid class_name '{c_name}'."
-        }), 400
-
-    treatment = get_treatment_options(c_name, diagnosis_reliable=True)
-    return jsonify({
-        "status": "success",
-        "class_name": c_name,
-        "treatment_options": treatment
-    }), 200
-
 @app.route('/api/symptom-questions', methods=['GET'])
 def api_symptom_questions():
     c_name = request.args.get('class_name')
@@ -590,148 +504,6 @@ def api_classes():
         "total_classes": len(class_names)
     }), 200
 
-def run_crop_aware_inference(filepath, selected_crop=None):
-    """
-    Runs model inference and computes safe crop-aware diagnosis.
-    - Model predicts all 36 probabilities in a single pass.
-    - Computes crop probability mass for each supported crop.
-    - Evaluates disease candidates specifically within the user-selected crop using raw probabilities.
-    - Enforces Safe Diagnosis Gate safeguards (MIN_CONFIDENCE=50%, MIN_MARGIN=10%).
-    """
-    img = image.load_img(filepath, target_size=(224, 224))
-    img_array = image.img_to_array(img)
-    if IS_V2_ACTIVE:
-        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(np.expand_dims(img_array, axis=0))
-    else:
-        img_array = np.expand_dims(img_array, axis=0) / 255.0
-
-    raw_probs = model.predict(img_array)[0]
-
-    all_preds = []
-    for idx, prob in enumerate(raw_probs):
-        conf_pct = float(prob * 100)
-        c_name = class_names[idx]
-        crop, condition, is_healthy = parse_class_info(c_name)
-        all_preds.append({
-            "index": idx,
-            "class_name": c_name,
-            "crop": crop,
-            "condition": condition,
-            "confidence": round(conf_pct, 2),
-            "raw_probability": float(prob),
-            "is_healthy": is_healthy
-        })
-
-    # Sort global raw predictions descending by confidence
-    global_sorted = sorted(all_preds, key=lambda x: x['confidence'], reverse=True)
-    global_top1 = global_sorted[0]
-
-    # Calculate probability mass for each crop
-    crop_scores = {}
-    for crop in SUPPORTED_CROPS:
-        crop_lower = crop.lower()
-        indices = [p["index"] for p in all_preds if p["crop"].lower() == crop_lower]
-        mass = sum(float(raw_probs[i]) for i in indices) * 100.0
-        crop_scores[crop] = round(mass, 2)
-
-    best_crop_by_mass = max(crop_scores, key=crop_scores.get)
-
-    matched_selected = None
-    if selected_crop:
-        matched_selected = next((c for c in SUPPORTED_CROPS if c.lower() == selected_crop.lower()), None)
-
-    eval_crop = matched_selected if matched_selected else best_crop_by_mass
-
-    selected_crop_preds = [p for p in all_preds if p["crop"].lower() == eval_crop.lower()]
-    selected_crop_preds.sort(key=lambda x: x['confidence'], reverse=True)
-
-    selected_crop_top1 = selected_crop_preds[0] if len(selected_crop_preds) > 0 else global_top1
-    selected_crop_top2 = selected_crop_preds[1] if len(selected_crop_preds) > 1 else None
-
-    selected_crop_confidence = selected_crop_top1["confidence"]
-    selected_crop_top2_conf = selected_crop_top2["confidence"] if selected_crop_top2 else 0.0
-    selected_crop_margin = round(selected_crop_confidence - selected_crop_top2_conf, 2)
-    selected_crop_score = crop_scores.get(eval_crop, 0.0)
-
-    # Safe Diagnosis Gate Evaluation
-    diagnosis_reliable = True
-    uncertainty_reason = None
-
-    if matched_selected:
-        # User selected a specific crop
-        if best_crop_by_mass.lower() != matched_selected.lower():
-            diagnosis_reliable = False
-            uncertainty_reason = f"The uploaded image does not confidently match the selected crop ({matched_selected})."
-        elif selected_crop_confidence < MIN_CONFIDENCE_THRESHOLD:
-            diagnosis_reliable = False
-            uncertainty_reason = f"Prediction confidence for {matched_selected} ({selected_crop_confidence:.1f}%) is below minimum threshold ({MIN_CONFIDENCE_THRESHOLD}%)."
-        elif selected_crop_margin < MIN_MARGIN_THRESHOLD:
-            diagnosis_reliable = False
-            uncertainty_reason = f"High prediction ambiguity between top disease candidates in {matched_selected} (confidence margin is only {selected_crop_margin:.1f}%)."
-    else:
-        # No crop selected
-        if selected_crop_confidence < MIN_CONFIDENCE_THRESHOLD:
-            diagnosis_reliable = False
-            uncertainty_reason = f"Prediction confidence ({selected_crop_confidence:.1f}%) is below minimum threshold ({MIN_CONFIDENCE_THRESHOLD}%)."
-        elif selected_crop_margin < MIN_MARGIN_THRESHOLD:
-            diagnosis_reliable = False
-            uncertainty_reason = f"High prediction ambiguity between top predictions (confidence margin is only {selected_crop_margin:.1f}%)."
-
-    status = "success" if diagnosis_reliable else "uncertain"
-    main_prediction = selected_crop_top1
-
-    top_predictions_formatted = [
-        {
-            "class_name": p["class_name"],
-            "crop": p["crop"],
-            "condition": p["condition"],
-            "confidence": p["confidence"]
-        }
-        for p in selected_crop_preds[:3]
-    ]
-
-    raw_top_predictions_formatted = [
-        {
-            "class_name": p["class_name"],
-            "crop": p["crop"],
-            "condition": p["condition"],
-            "confidence": p["confidence"]
-        }
-        for p in global_sorted[:3]
-    ]
-
-    treatment_options = get_treatment_options(main_prediction["class_name"], diagnosis_reliable=diagnosis_reliable)
-
-    return {
-        "status": status,
-        "selected_crop": matched_selected if matched_selected else selected_crop,
-        "prediction": {
-            "class_name": main_prediction["class_name"],
-            "crop": main_prediction["crop"],
-            "condition": main_prediction["condition"],
-            "confidence": main_prediction["confidence"]
-        },
-        "top_predictions": top_predictions_formatted,
-        "raw_top_predictions": raw_top_predictions_formatted,
-        "crop_scores": crop_scores,
-        "best_crop_by_mass": best_crop_by_mass,
-        "selected_crop_score": selected_crop_score,
-        "selected_crop_prediction": {
-            "class_name": selected_crop_top1["class_name"],
-            "crop": selected_crop_top1["crop"],
-            "condition": selected_crop_top1["condition"],
-            "confidence": selected_crop_top1["confidence"]
-        },
-        "selected_crop_confidence": selected_crop_confidence,
-        "selected_crop_margin": selected_crop_margin,
-        "diagnosis_reliable": diagnosis_reliable,
-        "uncertainty_reason": uncertainty_reason,
-        "is_healthy": main_prediction["is_healthy"],
-        "treatment_options": treatment_options,
-        "target_class_idx": main_prediction["index"],
-        "img_array": img_array
-    }
-
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
     if model is None:
@@ -747,6 +519,7 @@ def api_predict():
     if not allowed_file(file.filename):
         return jsonify({"error": f"Invalid file type. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}"}), 400
 
+    # User selected crop (optional in request, but evaluated against prediction if provided)
     selected_crop = request.form.get('selected_crop') or request.args.get('selected_crop')
     if selected_crop:
         selected_crop = selected_crop.strip()
@@ -761,6 +534,7 @@ def api_predict():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     file.save(filepath)
 
+    # Validate image file readability/integrity
     try:
         with Image.open(filepath) as img_check:
             img_check.verify()
@@ -770,11 +544,61 @@ def api_predict():
         return jsonify({"error": "Uploaded file is not a valid or readable image"}), 400
 
     try:
-        res = run_crop_aware_inference(filepath, selected_crop=selected_crop)
-        # Remove non-serializable objects before json response
-        res.pop("img_array", None)
-        res.pop("target_class_idx", None)
-        return jsonify(res), 200
+        all_preds = process_and_predict(filepath)
+        top1 = all_preds[0]
+        top2 = all_preds[1] if len(all_preds) > 1 else None
+        top3 = all_preds[:3]
+
+        # Safe Diagnosis Gate Evaluation
+        diagnosis_reliable = True
+        uncertainty_reason = None
+
+        top1_conf = top1["confidence"]
+        top2_conf = top2["confidence"] if top2 else 0.0
+        margin = top1_conf - top2_conf
+
+        # Gate 1: Selected crop alignment
+        if selected_crop and top1["crop"].lower() != selected_crop.lower():
+            diagnosis_reliable = False
+            uncertainty_reason = f"Predicted crop ({top1['crop']}) does not match user-selected crop ({selected_crop})."
+        
+        # Gate 2: Confidence threshold
+        elif top1_conf < MIN_CONFIDENCE_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"Prediction confidence ({top1_conf:.1f}%) is below minimum threshold ({MIN_CONFIDENCE_THRESHOLD}%)."
+
+        # Gate 3: Confidence margin threshold
+        elif margin < MIN_MARGIN_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"High prediction ambiguity (confidence margin between top predictions is only {margin:.1f}%)."
+
+        status = "success" if diagnosis_reliable else "uncertain"
+
+        top_predictions_formatted = [
+            {
+                "class_name": p["class_name"],
+                "crop": p["crop"],
+                "condition": p["condition"],
+                "confidence": p["confidence"]
+            }
+            for p in top3
+        ]
+
+        return jsonify({
+            "status": status,
+            "selected_crop": selected_crop,
+            "prediction": {
+                "class_name": top1["class_name"],
+                "crop": top1["crop"],
+                "condition": top1["condition"],
+                "confidence": top1["confidence"]
+            },
+            "top_predictions": top_predictions_formatted,
+            "diagnosis_reliable": diagnosis_reliable,
+            "uncertainty_reason": uncertainty_reason,
+            "is_healthy": top1["is_healthy"]
+        }), 200
+
     except Exception as e:
         return jsonify({"error": f"Model inference error: {str(e)}"}), 500
     finally:
@@ -822,19 +646,71 @@ def api_explain():
 
     try:
         pil_img = Image.open(filepath).convert('RGB')
-        res = run_crop_aware_inference(filepath, selected_crop=selected_crop)
+        img = image.load_img(filepath, target_size=(224, 224))
+        img_array = image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0) / 255.0
+
+        predictions = model.predict(img_array)[0]
+        
+        all_preds = []
+        for idx, prob in enumerate(predictions):
+            conf_pct = float(prob * 100)
+            c_name = class_names[idx]
+            crop, condition, is_healthy = parse_class_info(c_name)
+            all_preds.append({
+                "index": idx,
+                "class_name": c_name,
+                "crop": crop,
+                "condition": condition,
+                "confidence": round(conf_pct, 2),
+                "is_healthy": is_healthy
+            })
+        
+        all_preds.sort(key=lambda x: x['confidence'], reverse=True)
+        top1 = all_preds[0]
+        top2 = all_preds[1] if len(all_preds) > 1 else None
+        top3 = all_preds[:3]
+
+        diagnosis_reliable = True
+        uncertainty_reason = None
+
+        top1_conf = top1["confidence"]
+        top2_conf = top2["confidence"] if top2 else 0.0
+        margin = top1_conf - top2_conf
+
+        if selected_crop and top1["crop"].lower() != selected_crop.lower():
+            diagnosis_reliable = False
+            uncertainty_reason = f"Predicted crop ({top1['crop']}) does not match user-selected crop ({selected_crop})."
+        elif top1_conf < MIN_CONFIDENCE_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"Prediction confidence ({top1_conf:.1f}%) is below minimum threshold ({MIN_CONFIDENCE_THRESHOLD}%)."
+        elif margin < MIN_MARGIN_THRESHOLD:
+            diagnosis_reliable = False
+            uncertainty_reason = f"High prediction ambiguity (confidence margin between top predictions is only {margin:.1f}%)."
+
+        status = "success" if diagnosis_reliable else "uncertain"
+
+        top_predictions_formatted = [
+            {
+                "class_name": p["class_name"],
+                "crop": p["crop"],
+                "condition": p["condition"],
+                "confidence": p["confidence"]
+            }
+            for p in top3
+        ]
 
         explanation = None
         advisory_info = None
 
-        if res["diagnosis_reliable"]:
+        if diagnosis_reliable:
             explanation = generate_gradcam(
                 model=model,
-                img_array=res["img_array"],
-                target_class_idx=res["target_class_idx"],
+                img_array=img_array,
+                target_class_idx=top1["index"],
                 original_pil_image=pil_img
             )
-            adv_raw = ADVISORY_DATABASE.get(res["prediction"]["class_name"])
+            adv_raw = ADVISORY_DATABASE.get(top1["class_name"])
             if adv_raw:
                 advisory_info = {
                     "overview": adv_raw["overview"],
@@ -846,12 +722,22 @@ def api_explain():
                     "sources": adv_raw["sources"]
                 }
 
-        res.pop("img_array", None)
-        res.pop("target_class_idx", None)
-        res["explanation"] = explanation
-        res["advisory"] = advisory_info
-
-        return jsonify(res), 200
+        return jsonify({
+            "status": status,
+            "selected_crop": selected_crop,
+            "prediction": {
+                "class_name": top1["class_name"],
+                "crop": top1["crop"],
+                "condition": top1["condition"],
+                "confidence": top1["confidence"]
+            },
+            "top_predictions": top_predictions_formatted,
+            "diagnosis_reliable": diagnosis_reliable,
+            "uncertainty_reason": uncertainty_reason,
+            "is_healthy": top1["is_healthy"],
+            "explanation": explanation,
+            "advisory": advisory_info
+        }), 200
 
     except Exception as e:
         return jsonify({"error": f"Grad-CAM explanation error: {str(e)}"}), 500

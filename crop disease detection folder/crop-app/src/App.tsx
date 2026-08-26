@@ -10,7 +10,6 @@ import { GradCamVisualizer } from './components/GradCamVisualizer';
 import { SymptomVerification } from './components/SymptomVerification';
 import { WeatherContextPanel } from './components/WeatherContextPanel';
 import { AdvisoryPanel } from './components/AdvisoryPanel';
-import { TreatmentOptionsCard } from './components/TreatmentOptionsCard';
 import { TopPredictions } from './components/TopPredictions';
 import { UncertainState } from './components/UncertainState';
 import { ErrorState } from './components/ErrorState';
@@ -38,13 +37,6 @@ export const App: React.FC = () => {
   const [savedScanRecord, setSavedScanRecord] = useState<ScanRecord | null>(null);
 
   const scannerRef = useRef<HTMLDivElement>(null);
-  const resultsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (analysisResult && resultsRef.current) {
-      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [analysisResult]);
 
   // Check Backend Server Health on Mount
   useEffect(() => {
@@ -145,7 +137,7 @@ export const App: React.FC = () => {
         <section className="text-center max-w-3xl mx-auto space-y-4 pt-4 sm:pt-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300 text-xs font-bold shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-            <span>MobileNetV2 AI Engine • 36 Disease & Health Classes</span>
+            <span>MobileNetV2 AI Engine • 27 Crop Classes</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-emerald-950 font-outfit tracking-tight leading-[1.1]">
@@ -169,11 +161,11 @@ export const App: React.FC = () => {
           {/* Quick Stats Grid */}
           <div className="pt-6 grid grid-cols-3 gap-3 max-w-lg mx-auto">
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
-              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">6</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">4</span>
               <span className="text-[11px] font-semibold text-slate-500">Supported Crops</span>
             </div>
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
-              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">36</span>
+              <span className="text-xl sm:text-2xl font-black text-emerald-800 font-outfit block">27</span>
               <span className="text-[11px] font-semibold text-slate-500">Disease & Healthy</span>
             </div>
             <div className="bg-white/80 border border-slate-200/80 rounded-2xl p-3 shadow-2xs">
@@ -184,7 +176,7 @@ export const App: React.FC = () => {
         </section>
 
         {/* STEP 1: CROP SELECTOR */}
-        <section ref={scannerRef} className="pt-4 scroll-mt-28">
+        <section ref={scannerRef} className="pt-4 scroll-mt-20">
           <CropSelector
             selectedCrop={selectedCrop}
             onSelectCrop={(crop) => {
@@ -239,7 +231,7 @@ export const App: React.FC = () => {
 
           {/* State 5: Successful / Reliable Diagnosis */}
           {analysisResult && analysisResult.diagnosis_reliable && (
-            <div ref={resultsRef} className="space-y-6 scroll-mt-28">
+            <div className="space-y-6">
               {/* 1. AI Crop Assessment + Model Confidence */}
               <DiagnosisCard result={analysisResult} />
               
@@ -282,12 +274,6 @@ export const App: React.FC = () => {
                   Guidance temporarily unavailable for this condition.
                 </div>
               )}
-
-              {/* 6. Source-Backed Treatment Options */}
-              <TreatmentOptionsCard
-                treatmentOptions={analysisResult.treatment_options}
-                isReliable={analysisResult.diagnosis_reliable}
-              />
 
               {/* 4. Other Possible Crop Matches */}
               <TopPredictions

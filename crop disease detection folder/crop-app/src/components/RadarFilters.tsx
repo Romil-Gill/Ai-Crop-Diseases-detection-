@@ -15,7 +15,7 @@ const TIME_WINDOWS = [
   { label: 'All Time', value: 0 },
 ];
 
-const CROPS = ['All', 'Tomato', 'Rice', 'Sugarcane', 'Pumpkin', 'Wheat', 'Maize'];
+const CROPS = ['All', 'Tomato', 'Rice', 'Sugarcane', 'Pumpkin'];
 
 export const RadarFilters: React.FC<RadarFiltersProps> = ({
   days,

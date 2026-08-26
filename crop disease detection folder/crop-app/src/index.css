@@ -1,15 +1,6 @@
 @import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
-html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 5rem;
-}
-
-[id] {
-  scroll-margin-top: 5rem;
-}
-
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;

@@ -10,11 +10,12 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ result }) => {
   const { prediction, selected_crop, is_healthy } = result;
 
   return (
-    <div className={`w-full rounded-3xl p-6 sm:p-8 border-2 shadow-sm transition-all ${is_healthy
-      ? 'bg-gradient-to-br from-emerald-50 via-white to-green-50/50 border-emerald-300'
-      : 'bg-gradient-to-br from-amber-50/60 via-white to-orange-50/30 border-amber-300'
-      }`}>
-
+    <div className={`w-full rounded-3xl p-6 sm:p-8 border-2 shadow-sm transition-all ${
+      is_healthy
+        ? 'bg-gradient-to-br from-emerald-50 via-white to-green-50/50 border-emerald-300'
+        : 'bg-gradient-to-br from-amber-50/60 via-white to-orange-50/30 border-amber-300'
+    }`}>
+      
       {/* Header Banner */}
       <div className="flex items-center justify-between gap-2 mb-6 border-b border-slate-200/60 pb-4">
         <div className="flex items-center gap-2">
@@ -49,9 +50,10 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ result }) => {
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
             Detected Condition
           </div>
-
-          <h2 className={`text-2xl sm:text-3xl font-extrabold font-outfit tracking-tight ${is_healthy ? 'text-emerald-700' : 'text-slate-900'
-            }`}>
+          
+          <h2 className={`text-2xl sm:text-3xl font-extrabold font-outfit tracking-tight ${
+            is_healthy ? 'text-emerald-700' : 'text-slate-900'
+          }`}>
             {prediction.condition}
           </h2>
 
@@ -73,7 +75,7 @@ export const DiagnosisCard: React.FC<DiagnosisCardProps> = ({ result }) => {
             <span className="text-lg font-bold text-emerald-600">%</span>
           </div>
           <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-            <div
+            <div 
               className="bg-emerald-600 h-full rounded-full transition-all duration-500"
               style={{ width: `${Math.min(100, prediction.confidence)}%` }}
             />

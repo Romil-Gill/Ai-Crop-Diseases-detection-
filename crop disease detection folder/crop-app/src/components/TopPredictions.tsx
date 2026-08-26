@@ -100,7 +100,7 @@ export const TopPredictions: React.FC<TopPredictionsProps> = ({ predictions, sel
 
         {showTechnicalDetails && (
           <div className="mt-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-2">
-            <p className="font-semibold text-slate-700">Raw Global 36-Class Softmax Output:</p>
+            <p className="font-semibold text-slate-700">Raw Global 27-Class Softmax Output:</p>
             <div className="space-y-1.5 font-mono text-[11px]">
               {predictions.map((p, idx) => (
                 <div key={idx} className="flex justify-between items-center bg-white p-2 rounded border border-slate-200">

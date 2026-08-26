@@ -5,7 +5,7 @@ interface HistoryFiltersProps {
   onSelectCrop: (crop: string) => void;
 }
 
-const CROPS = ['All', 'Tomato', 'Rice', 'Sugarcane', 'Pumpkin', 'Wheat', 'Maize'];
+const CROPS = ['All', 'Tomato', 'Rice', 'Sugarcane', 'Pumpkin'];
 
 export const HistoryFilters: React.FC<HistoryFiltersProps> = ({ activeCrop, onSelectCrop }) => {
   return (

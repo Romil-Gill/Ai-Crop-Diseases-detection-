@@ -1,4 +1,4 @@
-export type SupportedCrop = 'Tomato' | 'Rice' | 'Sugarcane' | 'Pumpkin' | 'Wheat' | 'Maize';
+export type SupportedCrop = 'Tomato' | 'Rice' | 'Sugarcane' | 'Pumpkin';
 
 export interface ClassInfo {
   class_name: string;
@@ -314,13 +314,6 @@ export interface PredictResponse {
   selected_crop?: string | null;
   prediction: PredictionItem;
   top_predictions: PredictionItem[];
-  raw_top_predictions?: PredictionItem[];
-  crop_scores?: Record<string, number>;
-  best_crop_by_mass?: string;
-  selected_crop_score?: number;
-  selected_crop_prediction?: PredictionItem;
-  selected_crop_confidence?: number;
-  selected_crop_margin?: number;
   diagnosis_reliable: boolean;
   uncertainty_reason?: string | null;
   is_healthy: boolean;

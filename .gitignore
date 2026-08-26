@@ -59,10 +59,5 @@ Thumbs.db
 *.swo
 
 # Project junk cleanup
-
-# Training datasets & candidate model artifacts
-dataset_6crop/
-crop_disease_model_v2_candidate.keras
-*.tmp.keras
-best_weights_exp_*.keras
-best_v2_weights.keras
+60
+{

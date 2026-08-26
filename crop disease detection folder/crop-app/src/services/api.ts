@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, ScanRecord, SaveScanResponse, ScansListResponse, CommunitySignalResponse, CommunitySignalsListResponse, CommunitySummaryResponse, CommunityRadarResponse, SupportedCrop, TreatmentOptions } from '../types/api';
+import type { HealthResponse, ClassesResponse, PredictResponse, AdvisoryResponse, SymptomQuestionsResponse, SymptomVerifyResponse, LocationSearchResponse, WeatherContextResponse, ScanRecord, SaveScanResponse, ScansListResponse, CommunitySignalResponse, CommunitySignalsListResponse, CommunitySummaryResponse, CommunityRadarResponse, SupportedCrop } from '../types/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:5000';
 
@@ -308,20 +308,6 @@ export const getCommunityRadar = async (
       crop_breakdown: [],
       recent_signals: [],
       disclaimer: 'Map locations are coarsened for farmer privacy. Signals represent community reports, not laboratory cases.',
-    };
-  }
-};
-
-export const getTreatmentOptions = async (className: string): Promise<TreatmentOptions> => {
-  try {
-    const response = await apiClient.get<{ status: string; class_name: string; treatment_options: TreatmentOptions }>('/api/treatment-options', {
-      params: { class_name: className },
-    });
-    return response.data.treatment_options;
-  } catch (error) {
-    return {
-      available: false,
-      reason: 'Failed to retrieve treatment options from server.',
     };
   }
 };
